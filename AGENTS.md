@@ -31,6 +31,7 @@ All docs except CLAUDE.md, AGENTS.md, TODOS.md, and CHANGELOG.md live in `./docs
 
 - [docs/workflows/agent-loop.md](./docs/workflows/agent-loop.md) — repeatable autonomous task execution loop
 - [docs/workflows/agent-review.md](./docs/workflows/agent-review.md) — review personas, findings format, quality checklist, escalation rules
+- [docs/workflows/worktrees.md](./docs/workflows/worktrees.md) — creating and managing parallel worktrees
 
 **Guidelines**
 
