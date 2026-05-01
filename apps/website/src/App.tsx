@@ -54,7 +54,7 @@ export function App() {
             data-umami-event="Download macOS app"
             data-umami-event-version={__WRITER_VERSION__}
           >
-            <AppleGlyph size={14} />
+            <AppleGlyph size={20} />
             <span>Download for MacOS</span>
           </a>
           <span className="alpha-pill">Alpha</span>

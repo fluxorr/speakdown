@@ -172,7 +172,6 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  width: 186px;
   height: 40px;
   padding: 0 12px;
   border-radius: var(--radius);
