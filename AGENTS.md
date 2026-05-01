@@ -44,6 +44,7 @@ All docs except CLAUDE.md, AGENTS.md, TODOS.md, and CHANGELOG.md live in `./docs
 **Infra**
 
 - [docs/releasing.md](./docs/releasing.md) — how to cut a signed, notarized macOS release
+- [docs/website-deploy.md](./docs/website-deploy.md) — how to deploy the marketing website to Cloudflare Workers
 
 **Cross-cutting**
 

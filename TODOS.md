@@ -2,7 +2,7 @@
 
 ## In Progress
 
-- Landing page redesign: [`SPECs/landing-page-redesign-spec.md`](SPECs/landing-page-redesign-spec.md) — Figma "Writer Computer" frame implemented under `apps/website/` (single-page React + Vite, dark, SF Pro, single orange accent). Remaining: real screenshots into `apps/website/public/screenshots/`, GitHub Pages deploy workflow, custom-domain decision, copy review. Supersedes `SPECs/landing-page-spec.md`.
+- Landing page redesign: [`SPECs/landing-page-redesign-spec.md`](SPECs/landing-page-redesign-spec.md) — Figma "Writer Computer" frame implemented under `apps/website/` (single-page React + Vite, dark, SF Pro, single orange accent). Remaining: real screenshots into `apps/website/public/screenshots/`, custom-domain decision, copy review. Supersedes `SPECs/landing-page-spec.md`.
 
 ## Up Next
 
