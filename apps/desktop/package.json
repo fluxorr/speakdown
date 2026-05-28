@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "vp dev",
+    "build": "vp exec tsc && vp build",
+    "preview": "vp preview",
     "tauri": "tauri"
   },
   "dependencies": {

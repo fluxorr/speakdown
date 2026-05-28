@@ -2,7 +2,7 @@
 
 ## 2026-05-27
 
-- Make the root `dev` script start the desktop Tauri development workflow (`vp run desktop#tauri dev`) instead of the frontend-only Vite server.
+- Make the root `dev` script start the desktop Tauri development workflow (`vp run desktop#tauri dev`) instead of the frontend-only Vite server, and route the desktop package's dev/build/preview scripts through Vite+ built-ins instead of raw Vite binaries.
 - Refresh compatible Rust and JavaScript dependency lockfiles. The JavaScript update moves the local Vite+ toolchain to the latest compatible lockfile version, aligns the root TypeScript config with the app-level bundler resolution used by Vite/Vitest checks, and clears the current package audit with direct dependency bumps plus targeted transitive overrides.
 
 ## 2026-05-26
