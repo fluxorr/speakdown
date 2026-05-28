@@ -29,6 +29,9 @@
 - Refreshed `apps/desktop/src-tauri/Cargo.lock` with `cargo update`.
 - Refreshed `pnpm-lock.yaml` with the compatible `vite-plus` lock update from
   `0.1.15` to `0.1.22`.
+- Ran `vp update -r -w`; with the lock already current, this finalized the
+  `vite-plus` catalog specifier as `^0.1.22` and refreshed Vite+'s generated
+  agent instructions.
 - Changed the root `tsconfig.json` from NodeNext module resolution to bundler
   resolution so root-level type-aware checks treat Vitest/test imports the same
   way the app package configs do.
