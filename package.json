@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
-    "dev": "vp run desktop#tauri dev",
+    "dev": "vp run desktop#dev",
     "prepare": "vp config",
     "distribute": "./scripts/distribute.sh"
   },
