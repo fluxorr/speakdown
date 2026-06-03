@@ -17,7 +17,7 @@ import { useUIStore } from "../src/stores/ui-store";
 import { useWorkspaceStore } from "../src/stores/workspace-store";
 import { toggleSidebar } from "../src/hooks/use-sidebar";
 import { toggleTheme } from "../src/hooks/use-theme";
-import { createPendingOpenDrainer } from "../src/hooks/use-open-drop";
+import { createPendingOpenDrainer, handleOpenPayload } from "../src/hooks/use-open-drop";
 import { getEditorSessionSnapshot } from "../src/stores/editor-store";
 
 const mockedInvoke = vi.mocked(invoke);
@@ -55,6 +55,7 @@ describe("workspace-store", () => {
     vi.clearAllMocks();
     useWorkspaceStore.setState({
       root: null,
+      chromeMode: "workspace",
       directoryCache: new Map(),
       expandedDirs: new Set(),
       pinnedFiles: [],
@@ -160,6 +161,7 @@ describe("editor-store", () => {
       activeTabId: null,
       activeFilePath: null,
     });
+    useWorkspaceStore.setState({ chromeMode: "workspace" });
   });
 
   test("openFile loads file and sets active", async () => {
@@ -464,6 +466,24 @@ describe("editor-store", () => {
     expect(state.tabs.some((tab) => tab.location.kind === "file")).toBe(false);
   });
 
+  test("openCompactFile replaces existing tabs with a single file tab", async () => {
+    mockedInvoke
+      .mockResolvedValueOnce({ path: "/a.md", content: "a", modified_at: 1 })
+      .mockResolvedValueOnce({ path: "/b.md", content: "b", modified_at: 2 })
+      .mockResolvedValueOnce({ path: "/c.md", content: "c", modified_at: 3 });
+
+    await useEditorStore.getState().openFile("/a.md");
+    await useEditorStore.getState().openFileInNewTab("/b.md");
+    await useEditorStore.getState().openCompactFile("/c.md");
+
+    const state = useEditorStore.getState();
+    expect(tabPaths()).toEqual(["/c.md"]);
+    expect(state.activeFilePath).toBe("/c.md");
+    expect(state.openFiles.has("/a.md")).toBe(false);
+    expect(state.openFiles.has("/b.md")).toBe(false);
+    expect(state.openFiles.get("/c.md")?.content).toBe("c");
+  });
+
   test("removePathReferences closes every tab whose current location matches", async () => {
     mockedInvoke
       .mockResolvedValueOnce({ path: "/a.md", content: "a", modified_at: 1 })
@@ -765,6 +785,7 @@ describe("workspace-store removeRecentWorkspace", () => {
     vi.clearAllMocks();
     useWorkspaceStore.setState({
       root: null,
+      chromeMode: "workspace",
       directoryCache: new Map(),
       expandedDirs: new Set(),
       recentWorkspaces: ["/a", "/b", "/c"],
@@ -790,6 +811,109 @@ describe("workspace-store isStartupResolved", () => {
   test("setStartupResolved sets it to true", () => {
     useWorkspaceStore.getState().setStartupResolved();
     expect(useWorkspaceStore.getState().isStartupResolved).toBe(true);
+  });
+});
+
+describe("workspace-store restoreFromBundle", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useWorkspaceStore.setState({
+      root: null,
+      chromeMode: "workspace",
+      directoryCache: new Map(),
+      expandedDirs: new Set(),
+      pinnedFiles: [],
+      sidebarMetadataVersion: 0,
+      recentWorkspaces: [],
+      fileCount: 0,
+    });
+    useEditorStore.setState({
+      openFiles: new Map(),
+      tabs: [],
+      activeTabId: null,
+      activeFilePath: null,
+    });
+  });
+
+  test("single-file restore enters compact mode and opens one file tab", async () => {
+    mockedInvoke.mockResolvedValue({ path: "/ws/a.md", content: "a", modified_at: 1 });
+
+    await useWorkspaceStore.getState().restoreFromBundle({
+      workspace: { root: "/ws", name: "ws", file_count: 1 },
+      entries: [],
+      recent_workspaces: ["/ws"],
+      session: null,
+      active_file: null,
+      open_file: "/ws/a.md",
+    });
+
+    expect(useWorkspaceStore.getState().chromeMode).toBe("compact-file");
+    expect(useWorkspaceStore.getState().root).toBe("/ws");
+    expect(tabPaths()).toEqual(["/ws/a.md"]);
+  });
+});
+
+describe("handleOpenPayload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useWorkspaceStore.setState({
+      root: "/ws",
+      chromeMode: "workspace",
+      directoryCache: new Map(),
+      expandedDirs: new Set(),
+      pinnedFiles: [],
+      sidebarMetadataVersion: 0,
+      recentWorkspaces: [],
+      fileCount: 0,
+    });
+    useEditorStore.setState({
+      openFiles: new Map(),
+      tabs: [],
+      activeTabId: null,
+      activeFilePath: null,
+    });
+  });
+
+  test("same-workspace file payload keeps normal workspace chrome", async () => {
+    mockedInvoke.mockResolvedValue({ path: "/ws/a.md", content: "a", modified_at: 1 });
+
+    await handleOpenPayload({ workspace: "/ws", file: "/ws/a.md" });
+
+    expect(useWorkspaceStore.getState().chromeMode).toBe("workspace");
+    expect(tabPaths()).toEqual(["/ws/a.md"]);
+  });
+
+  test("same-workspace file payload stays compact when the window is compact", async () => {
+    mockedInvoke
+      .mockResolvedValueOnce({ path: "/ws/a.md", content: "a", modified_at: 1 })
+      .mockResolvedValueOnce({ path: "/ws/b.md", content: "b", modified_at: 2 });
+    useWorkspaceStore.setState({ chromeMode: "compact-file" });
+
+    await useEditorStore.getState().openCompactFile("/ws/a.md");
+    await handleOpenPayload({ workspace: "/ws", file: "/ws/b.md" });
+
+    expect(useWorkspaceStore.getState().chromeMode).toBe("compact-file");
+    expect(tabPaths()).toEqual(["/ws/b.md"]);
+  });
+
+  test("same-workspace folder payload switches compact windows back to workspace chrome", async () => {
+    useWorkspaceStore.setState({ chromeMode: "compact-file" });
+
+    await handleOpenPayload({ workspace: "/ws", file: null });
+
+    expect(useWorkspaceStore.getState().chromeMode).toBe("workspace");
+  });
+
+  test("different workspace payload delegates to a new window", async () => {
+    mockedInvoke.mockResolvedValue(undefined);
+
+    await handleOpenPayload({ workspace: "/other", file: "/other/a.md" });
+
+    expect(mockedInvoke).toHaveBeenCalledWith("open_workspace_in_new_window", {
+      path: "/other",
+      file: "/other/a.md",
+    });
+    expect(useWorkspaceStore.getState().root).toBe("/ws");
   });
 });
 
@@ -894,6 +1018,7 @@ describe("workspace-store closeWorkspace", () => {
     mockedInvoke.mockResolvedValue(undefined);
     useWorkspaceStore.setState({
       root: "/test",
+      chromeMode: "workspace",
       isIndexing: true,
       directoryCache: new Map([["/test", []]]),
       expandedDirs: new Set(["/test/dir"]),
@@ -940,6 +1065,18 @@ describe("workspace-store closeWorkspace", () => {
     expect(ed.openFiles.size).toBe(0);
     expect(ed.activeFilePath).toBeNull();
     expect(ed.tabs).toEqual([]);
+  });
+
+  test("closeWorkspace does not save the workspace session in compact mode", () => {
+    useSettingsStore.setState({
+      settings: { "workspace.restore-open-files": true },
+      isLoaded: true,
+    });
+    useWorkspaceStore.setState({ chromeMode: "compact-file" });
+
+    useWorkspaceStore.getState().closeWorkspace();
+
+    expect(mockedInvoke.mock.calls.some(([command]) => command === "save_session")).toBe(false);
   });
 
   test("closeWorkspace is no-op when no workspace is open", () => {

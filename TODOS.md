@@ -6,6 +6,7 @@
 
 ## Done
 
+- Compact single-file window: [`SPECs/compact-window-spec.md`](SPECs/compact-window-spec.md) — use compact chrome for explicit single-file opens with no sidebar, no sidebar toggle, no tab strip, and a top dropdown that reuses Pinned, Recents, and Everything navigation.
 - Floating card shadow polish — add a large subtle shadow to the shared command-palette/popover card surface.
 - Sidebar sections redesign: [`SPECs/sidebar-sections-spec.md`](SPECs/sidebar-sections-spec.md) — split the sidebar into collapsible Pinned, Recents, and Everything sections; keep the existing file tree under Everything; add per-workspace pinned files and compact metadata-backed recent files with Show More pagination.
 - Table virtualization scroll stability: [`SPECs/table-virtualization-scroll-stability-spec.md`](SPECs/table-virtualization-scroll-stability-spec.md) — give folded markdown table widgets stable CodeMirror height estimates so scrolling through virtualized documents with tables does not suddenly resize the document or scrollbar.

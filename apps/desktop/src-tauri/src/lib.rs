@@ -98,6 +98,14 @@ pub(crate) fn open_new_workspace_window(
     if let Some(existing_label) = app.state::<AppState>().find_by_workspace(&workspace) {
         if let Some(window) = app.get_webview_window(&existing_label) {
             let _ = window.set_focus();
+            queue_open_event(
+                app,
+                &existing_label,
+                PendingOpenPayload {
+                    workspace: workspace_str,
+                    file,
+                },
+            );
             return Ok(());
         }
     }

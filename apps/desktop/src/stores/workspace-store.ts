@@ -6,8 +6,11 @@ import { getPreference, setPreference } from "@/lib/preferences";
 import { saveSession, loadSession } from "@/lib/session";
 import { getEditorSessionSnapshot, useEditorStore } from "@/stores/editor-store";
 
+export type WorkspaceChromeMode = "workspace" | "compact-file";
+
 interface WorkspaceState {
   root: string | null;
+  chromeMode: WorkspaceChromeMode;
   fileCount: number;
   isIndexing: boolean;
   isStartupResolved: boolean;
@@ -22,6 +25,7 @@ interface WorkspaceState {
    *  and user-initiated switches via the `restore_workspace` IPC). */
   restoreFromBundle: (bundle: RestoreWorkspaceResponse) => Promise<void>;
   closeWorkspace: () => void;
+  setChromeMode: (mode: WorkspaceChromeMode) => void;
   setStartupResolved: () => void;
   refreshDirectory: (path: string) => Promise<void>;
   toggleDirectory: (path: string) => Promise<void>;
@@ -74,6 +78,7 @@ function dedupe(paths: string[]) {
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   root: null,
+  chromeMode: "workspace",
   fileCount: 0,
   isIndexing: false,
   isStartupResolved: false,
@@ -114,6 +119,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const recents = await tauri.getRecentWorkspaces();
     set({
       root: info.root,
+      chromeMode: "workspace",
       fileCount: info.file_count,
       isIndexing: true,
       directoryCache: new Map([[info.root, entries]]),
@@ -136,8 +142,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   closeWorkspace: () => {
     const root = get().root;
     if (!root) return;
-    const snapshot = getEditorSessionSnapshot(useEditorStore.getState());
-    void saveSession(root, snapshot.tabs, snapshot.activeIndex);
+    if (get().chromeMode !== "compact-file") {
+      const snapshot = getEditorSessionSnapshot(useEditorStore.getState());
+      void saveSession(root, snapshot.tabs, snapshot.activeIndex);
+    }
     useEditorStore.setState({
       openFiles: new Map(),
       tabs: [],
@@ -146,6 +154,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     });
     set({
       root: null,
+      chromeMode: "workspace",
       fileCount: 0,
       directoryCache: new Map(),
       expandedDirs: new Set(),
@@ -166,6 +175,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
     set({
       root: bundle.workspace.root,
+      chromeMode: bundle.open_file ? "compact-file" : "workspace",
       fileCount: bundle.workspace.file_count,
       isIndexing: true,
       directoryCache: new Map([[bundle.workspace.root, bundle.entries]]),
@@ -196,12 +206,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }
 
     if (bundle.open_file) {
-      void useEditorStore.getState().openFile(bundle.open_file);
+      void useEditorStore.getState().openCompactFile(bundle.open_file);
       return;
     }
 
     useEditorStore.getState().ensureLauncherTab();
   },
+
+  setChromeMode: (mode) => set({ chromeMode: mode }),
 
   setStartupResolved: () => set({ isStartupResolved: true }),
 
@@ -382,6 +394,7 @@ if (typeof window !== "undefined") {
     sessionSaveTimer = setTimeout(() => {
       const root = useWorkspaceStore.getState().root;
       if (!root) return;
+      if (useWorkspaceStore.getState().chromeMode === "compact-file") return;
       const snapshot = getEditorSessionSnapshot(useEditorStore.getState());
       void saveSession(root, snapshot.tabs, snapshot.activeIndex);
     }, 500);
@@ -391,6 +404,7 @@ if (typeof window !== "undefined") {
     if (sessionSaveTimer) clearTimeout(sessionSaveTimer);
     const root = useWorkspaceStore.getState().root;
     if (!root) return;
+    if (useWorkspaceStore.getState().chromeMode === "compact-file") return;
     const snapshot = getEditorSessionSnapshot(useEditorStore.getState());
     void saveSession(root, snapshot.tabs, snapshot.activeIndex);
   });

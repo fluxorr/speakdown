@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { createSettingsTab, useEditorStore } from "@/stores/editor-store";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 
 // Native menu items that drive in-app navigation emit a Tauri event from the
 // Rust menu handler. Add the (event-name → handler) pair here to subscribe;
@@ -14,6 +15,8 @@ export const MENU_EVENT_HANDLERS: Record<string, () => void> = {
 };
 
 function openPreferences() {
+  if (useWorkspaceStore.getState().chromeMode === "compact-file") return;
+
   useEditorStore
     .getState()
     .openOrFocus((tab) => tab.location.kind === "settings", createSettingsTab);

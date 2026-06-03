@@ -7,8 +7,9 @@ import { mark } from "@/lib/startup-metrics";
 import type { PendingOpenPayload } from "@/lib/tauri";
 import * as tauri from "@/lib/tauri";
 
-async function handleOpenPayload(payload: PendingOpenPayload) {
-  const current = useWorkspaceStore.getState().root;
+export async function handleOpenPayload(payload: PendingOpenPayload) {
+  const workspaceState = useWorkspaceStore.getState();
+  const current = workspaceState.root;
 
   // Different workspace: open in a new in-process window so the current
   // window is preserved. The new window pre-queues the pending-open payload
@@ -21,9 +22,20 @@ async function handleOpenPayload(payload: PendingOpenPayload) {
   if (payload.workspace !== current) {
     await useWorkspaceStore.getState().openWorkspace(payload.workspace);
   }
+
   if (payload.file) {
+    const latestWorkspaceState = useWorkspaceStore.getState();
+    if (!current || latestWorkspaceState.chromeMode === "compact-file") {
+      latestWorkspaceState.setChromeMode("compact-file");
+      await useEditorStore.getState().openCompactFile(payload.file);
+      return;
+    }
+
     await useEditorStore.getState().openFile(payload.file);
+    return;
   }
+
+  useWorkspaceStore.getState().setChromeMode("workspace");
 }
 
 let openTask: Promise<void> = Promise.resolve();

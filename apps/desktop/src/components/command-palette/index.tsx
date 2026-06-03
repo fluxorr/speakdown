@@ -17,11 +17,12 @@ import {
   useSetCommandPaletteSearch,
 } from "@/hooks/use-command-palette";
 import { useSidebar } from "@/hooks/use-sidebar";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useIsCompactFileMode, useWorkspace } from "@/hooks/use-workspace";
 import {
   useActiveTabId,
   useCloseActiveTab,
   useCloseTab,
+  useOpenCompactFile,
   useOpenFile,
   useOpenSettingsTab,
   useOpenTabs,
@@ -48,12 +49,14 @@ export function CommandPalette() {
   const { toggleSidebar } = useSidebar();
   const { root, isIndexing, openWorkspace, closeWorkspace } = useWorkspace();
   const openFile = useOpenFile();
+  const openCompactFile = useOpenCompactFile();
   const closeActiveTab = useCloseActiveTab();
   const closeTab = useCloseTab();
   const activeTabId = useActiveTabId();
   const tabs = useOpenTabs();
   const { toggleTheme } = useTheme();
   const openSettingsTab = useOpenSettingsTab();
+  const isCompactFileMode = useIsCompactFileMode();
 
   const isCreateIntent = intent === "create-file";
   const trimmedSearch = search.trim();
@@ -66,7 +69,7 @@ export function CommandPalette() {
   }
 
   function handleSelect(path: string) {
-    void openFile(path);
+    void (isCompactFileMode ? openCompactFile(path) : openFile(path));
     close();
   }
 
@@ -76,7 +79,11 @@ export function CommandPalette() {
     close();
     void (async () => {
       await tauri.createFile(createPath);
-      await openFile(createPath);
+      if (isCompactFileMode) {
+        await openCompactFile(createPath);
+      } else {
+        await openFile(createPath);
+      }
     })();
   }
 
@@ -91,39 +98,42 @@ export function CommandPalette() {
   type Command = { id: string; label: string; description: string; run: () => void };
 
   const commands: Command[] = [
-    root && {
-      id: "toggle-sidebar",
-      label: "Toggle Sidebar",
-      description: "Command",
-      run: () => {
-        toggleSidebar();
-        close();
+    root &&
+      !isCompactFileMode && {
+        id: "toggle-sidebar",
+        label: "Toggle Sidebar",
+        description: "Command",
+        run: () => {
+          toggleSidebar();
+          close();
+        },
       },
-    },
     root && {
       id: "new-file",
       label: "Create New File",
       description: "Command",
       run: () => openCommandPalette("create-file"),
     },
-    activeTabId && {
-      id: "close-tab",
-      label: "Close Current Tab",
-      description: "Command",
-      run: () => {
-        closeActiveTab();
-        close();
+    activeTabId &&
+      !isCompactFileMode && {
+        id: "close-tab",
+        label: "Close Current Tab",
+        description: "Command",
+        run: () => {
+          closeActiveTab();
+          close();
+        },
       },
-    },
-    tabs.length > 0 && {
-      id: "close-all",
-      label: "Close All Tabs",
-      description: "Command",
-      run: () => {
-        for (const tab of tabs) closeTab(tab.id);
-        close();
+    tabs.length > 0 &&
+      !isCompactFileMode && {
+        id: "close-all",
+        label: "Close All Tabs",
+        description: "Command",
+        run: () => {
+          for (const tab of tabs) closeTab(tab.id);
+          close();
+        },
       },
-    },
     {
       id: "open-workspace",
       label: "Open Workspace",
@@ -148,7 +158,7 @@ export function CommandPalette() {
         close();
       },
     },
-    {
+    !isCompactFileMode && {
       id: "open-settings",
       label: "Settings",
       description: settingsKind.description,
