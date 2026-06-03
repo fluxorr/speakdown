@@ -27,17 +27,17 @@ export function CompactFileLayout() {
     <div className="relative h-screen w-screen overflow-hidden bg-transparent text-text-primary">
       <div
         data-tauri-drag-region
-        className="absolute inset-x-0 top-0"
+        className="absolute inset-x-0 top-0 z-30"
         style={{ height: "var(--chrome-drag-height)" }}
       />
       <div
-        className="pointer-events-auto absolute left-0 top-0 z-50 flex items-center"
+        className="pointer-events-auto absolute left-1/2 top-0 z-50 flex -translate-x-1/2 items-center"
         style={{
           height: "calc(var(--chrome-control-height) + var(--chrome-control-padding) * 2)",
-          padding: "var(--chrome-control-padding) 12px var(--chrome-control-padding) 92px",
+          paddingBlock: "var(--chrome-control-padding)",
         }}
       >
-        <div className="relative w-[min(420px,calc(100vw-116px))]">
+        <div className="relative w-[min(420px,calc(100vw-40px))]">
           <button
             type="button"
             aria-haspopup="tree"
@@ -65,7 +65,7 @@ export function CompactFileLayout() {
           </button>
 
           {isNavigatorOpen && (
-            <SurfaceCard className="absolute left-0 top-[calc(100%+8px)] w-full overflow-hidden rounded-xl">
+            <SurfaceCard className="absolute left-1/2 top-[calc(100%+8px)] w-[min(560px,calc(100vw-40px))] -translate-x-1/2 overflow-hidden rounded-xl">
               <ScrollFade className="max-h-[min(70vh,560px)] overflow-y-auto px-2 py-3 scrollbar-none">
                 <SidebarNavigator
                   openFile={handleOpenFile}

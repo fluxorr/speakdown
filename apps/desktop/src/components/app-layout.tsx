@@ -113,7 +113,7 @@ function WorkspaceLayout() {
     <div className="relative h-screen w-screen overflow-hidden bg-transparent text-text-primary">
       <div
         data-tauri-drag-region
-        className="absolute inset-x-0 top-0"
+        className="absolute inset-x-0 top-0 z-30"
         style={{ height: "var(--chrome-drag-height)" }}
       />
       <div
