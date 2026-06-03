@@ -7,6 +7,10 @@
 - Stop auto-expanding and scrolling the `Everything` tree when a file is opened from Pinned, Recents, search, links, or other open paths. The explicit tab context menu `Reveal in sidebar` action still expands ancestors and scrolls the tree on demand.
 - Add a large subtle shadow to the shared floating card surface used by the command palette and related popovers.
 
+## 2026-06-02
+
+- Fix Mermaid error messages rendering as a vertical column of characters. The diagram stage now expands to fill the viewport when displaying an error so the message lays out horizontally, and resets on valid re-render.
+
 ## 2026-06-01
 
 - Stabilize scrolling through documents with folded Markdown tables. Table preview widgets now provide CodeMirror with a deterministic height estimate before they enter the measured viewport, so the editor no longer suddenly changes document height, scrollbar thumb size, or scroll position as tables virtualize in.
