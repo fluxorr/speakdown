@@ -162,7 +162,7 @@ export function CompactFileLayout() {
     height: `${pickerShellHeight}px`,
     "--compact-picker-card-clip-path": pickerMaskClipPath,
     "--compact-picker-border-color": isNavigatorOpen ? "var(--line-subtler)" : "transparent",
-    "--compact-picker-trigger-bg-opacity": isNavigatorOpen ? "0" : "0.75",
+    "--compact-picker-trigger-bg-opacity": isNavigatorOpen ? "0" : "0.09",
   } as CSSProperties;
   const pickerNavigatorStyle = {
     position: "absolute",
