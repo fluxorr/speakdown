@@ -20,13 +20,20 @@ const PICKER_MAX_OPEN_HEIGHT = 560;
 const PICKER_VIEWPORT_HEIGHT_OFFSET = 96;
 const PICKER_CLOSED_RADIUS = 8;
 const PICKER_OPEN_RADIUS = 16;
-const PICKER_BORDER_INSET = 0.5;
 const FALLBACK_PICKER_METRICS = {
   triggerWidth: 120,
   triggerHeight: 32,
   rootWidth: 360,
   openHeight: 560,
 };
+
+interface PickerFrameGeometry {
+  left: number;
+  top: number;
+  scaleX: number;
+  scaleY: number;
+  radius: number;
+}
 
 export function CompactFileLayout() {
   const activeFilePath = useActiveFilePath();
@@ -37,7 +44,12 @@ export function CompactFileLayout() {
   const [pickerMetrics, setPickerMetrics] = useState(FALLBACK_PICKER_METRICS);
   const pickerRootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const pickerFrameRef = useRef<HTMLDivElement>(null);
+  const pickerContentScaleRef = useRef<HTMLDivElement>(null);
+  const pickerBorderRef = useRef<HTMLDivElement>(null);
   const openFrameRef = useRef<number | null>(null);
+  const pickerAnimationFrameRef = useRef<number | null>(null);
+  const currentPickerGeometryRef = useRef<PickerFrameGeometry | null>(null);
   const activeFile = activeFilePath ? openFiles.get(activeFilePath) : null;
   const title = activeFilePath ? activeFile?.title || getFileName(activeFilePath) : "Choose file";
 
@@ -144,6 +156,9 @@ export function CompactFileLayout() {
       if (openFrameRef.current) {
         window.cancelAnimationFrame(openFrameRef.current);
       }
+      if (pickerAnimationFrameRef.current) {
+        window.cancelAnimationFrame(pickerAnimationFrameRef.current);
+      }
     };
   }, []);
 
@@ -156,38 +171,106 @@ export function CompactFileLayout() {
   const pickerMaskWidth = isNavigatorOpen ? pickerMetrics.rootWidth : pickerMetrics.triggerWidth;
   const pickerMaskHeight = isNavigatorOpen ? pickerMetrics.openHeight : pickerMetrics.triggerHeight;
   const pickerMaskRadius = isNavigatorOpen ? PICKER_OPEN_RADIUS : PICKER_CLOSED_RADIUS;
-  const pickerBorderLeft = pickerMaskLeft + PICKER_BORDER_INSET;
-  const pickerBorderTop = pickerMaskTop + PICKER_BORDER_INSET;
-  const pickerBorderWidth = Math.max(0, pickerMaskWidth - PICKER_BORDER_INSET * 2);
-  const pickerBorderHeight = Math.max(0, pickerMaskHeight - PICKER_BORDER_INSET * 2);
-  const pickerBorderRadius = Math.max(0, pickerMaskRadius - PICKER_BORDER_INSET);
-  const pickerMaskRight = Math.max(0, pickerMetrics.rootWidth - pickerMaskLeft - pickerMaskWidth);
-  const pickerMaskBottom = Math.max(0, pickerShellHeight - pickerMaskTop - pickerMaskHeight);
-  const pickerMaskClipPath = `inset(${pickerMaskTop}px ${pickerMaskRight}px ${pickerMaskBottom}px ${pickerMaskLeft}px round ${pickerMaskRadius}px)`;
+  const pickerFrameScaleX = pickerMaskWidth / pickerMetrics.rootWidth;
+  const pickerFrameScaleY = pickerMaskHeight / pickerMetrics.openHeight;
+  const pickerContentScaleX = 1 / pickerFrameScaleX;
+  const pickerContentScaleY = 1 / pickerFrameScaleY;
+  const pickerFrameGeometry = {
+    left: pickerMaskLeft,
+    top: pickerMaskTop,
+    scaleX: pickerFrameScaleX,
+    scaleY: pickerFrameScaleY,
+    radius: pickerMaskRadius,
+  };
   const pickerShellStyle = {
     width: `${pickerMetrics.rootWidth}px`,
     height: `${pickerShellHeight}px`,
-    "--compact-picker-card-clip-path": pickerMaskClipPath,
-    "--compact-picker-border-color": isNavigatorOpen ? "var(--line-subtler)" : "transparent",
     "--compact-picker-trigger-bg-opacity": isNavigatorOpen ? "0" : "0.09",
     "--compact-picker-trigger-bg-delay": isNavigatorOpen
       ? "0ms"
       : `${PICKER_TRIGGER_BG_CLOSE_DELAY_MS}ms`,
   } as CSSProperties;
-  const pickerNavigatorStyle = {
-    position: "absolute",
-    left: 0,
-    top: `${pickerOpenTop}px`,
+  const pickerFrameStyle = {
     width: `${pickerMetrics.rootWidth}px`,
     height: `${pickerMetrics.openHeight}px`,
+    transform: `translate3d(${pickerMaskLeft}px, ${pickerMaskTop}px, 0) scale(${pickerFrameScaleX}, ${pickerFrameScaleY})`,
+    "--compact-picker-border-color": isNavigatorOpen ? "var(--line-subtler)" : "transparent",
+    borderRadius: `${pickerMaskRadius / pickerFrameScaleX}px / ${pickerMaskRadius / pickerFrameScaleY}px`,
+  } as CSSProperties;
+  const pickerContentScaleStyle = {
+    transform: `scale(${pickerContentScaleX}, ${pickerContentScaleY})`,
   } as CSSProperties;
   const pickerBorderStyle = {
-    "--compact-picker-border-x": `${pickerBorderLeft}px`,
-    "--compact-picker-border-y": `${pickerBorderTop}px`,
-    "--compact-picker-border-width": `${pickerBorderWidth}px`,
-    "--compact-picker-border-height": `${pickerBorderHeight}px`,
-    "--compact-picker-border-radius": `${pickerBorderRadius}px`,
+    borderTopWidth: `${1 / pickerFrameScaleY}px`,
+    borderRightWidth: `${1 / pickerFrameScaleX}px`,
+    borderBottomWidth: `${1 / pickerFrameScaleY}px`,
+    borderLeftWidth: `${1 / pickerFrameScaleX}px`,
   } as CSSProperties;
+
+  useLayoutEffect(() => {
+    const frame = pickerFrameRef.current;
+    const contentScale = pickerContentScaleRef.current;
+    const border = pickerBorderRef.current;
+    if (!frame || !contentScale || !border) return;
+
+    const previousGeometry = currentPickerGeometryRef.current;
+    if (!previousGeometry) {
+      applyPickerFrameGeometry(frame, contentScale, border, pickerFrameGeometry);
+      currentPickerGeometryRef.current = pickerFrameGeometry;
+      return;
+    }
+    const frameElement = frame;
+    const contentScaleElement = contentScale;
+    const borderElement = border;
+    const fromGeometry = previousGeometry;
+
+    if (pickerAnimationFrameRef.current) {
+      window.cancelAnimationFrame(pickerAnimationFrameRef.current);
+      pickerAnimationFrameRef.current = null;
+    }
+
+    const startTime = performance.now();
+
+    function tick(now: number) {
+      const progress = Math.min(1, (now - startTime) / PICKER_ANIMATION_MS);
+      const easedProgress = compactPickerEase(progress);
+      const nextGeometry = interpolatePickerFrameGeometry(
+        fromGeometry,
+        pickerFrameGeometry,
+        easedProgress,
+      );
+      applyPickerFrameGeometry(frameElement, contentScaleElement, borderElement, nextGeometry);
+      currentPickerGeometryRef.current = nextGeometry;
+
+      if (progress < 1) {
+        pickerAnimationFrameRef.current = window.requestAnimationFrame(tick);
+      } else {
+        pickerAnimationFrameRef.current = null;
+        applyPickerFrameGeometry(
+          frameElement,
+          contentScaleElement,
+          borderElement,
+          pickerFrameGeometry,
+        );
+        currentPickerGeometryRef.current = pickerFrameGeometry;
+      }
+    }
+
+    pickerAnimationFrameRef.current = window.requestAnimationFrame(tick);
+
+    return () => {
+      if (pickerAnimationFrameRef.current) {
+        window.cancelAnimationFrame(pickerAnimationFrameRef.current);
+        pickerAnimationFrameRef.current = null;
+      }
+    };
+  }, [
+    pickerFrameGeometry.left,
+    pickerFrameGeometry.radius,
+    pickerFrameGeometry.scaleX,
+    pickerFrameGeometry.scaleY,
+    pickerFrameGeometry.top,
+  ]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-transparent text-text-primary">
@@ -219,44 +302,41 @@ export function CompactFileLayout() {
               pointerEvents: isNavigatorOpen ? "auto" : "none",
             }}
           >
-            <div aria-hidden="true" className="compact-picker-card-surface absolute inset-0" />
-            {isPickerMounted && (
-              <div className="compact-picker-card-mask absolute inset-0 z-10">
-                <div
-                  className={`compact-picker-content ${
-                    isNavigatorOpen ? "compact-picker-content-open" : ""
-                  }`}
-                  style={pickerNavigatorStyle}
-                >
-                  <ScrollFade className="h-full overflow-y-auto px-2 py-3 scrollbar-none">
-                    <SidebarNavigator
-                      openFile={handleOpenFile}
-                      enableContextMenus={false}
-                      onOpenFileComplete={closeNavigator}
-                      className="flex flex-col gap-4"
-                    />
-                  </ScrollFade>
-                </div>
-              </div>
-            )}
-            <svg
-              aria-hidden="true"
-              className="compact-picker-border-layer"
-              width={pickerMetrics.rootWidth}
-              height={pickerShellHeight}
-              viewBox={`0 0 ${pickerMetrics.rootWidth} ${pickerShellHeight}`}
+            <div
+              ref={pickerFrameRef}
+              className="compact-picker-card-frame absolute left-0 top-0"
+              style={pickerFrameStyle}
             >
-              <rect
-                className="compact-picker-border-rect"
-                x={pickerBorderLeft}
-                y={pickerBorderTop}
-                width={pickerBorderWidth}
-                height={pickerBorderHeight}
-                rx={pickerBorderRadius}
-                ry={pickerBorderRadius}
+              <div aria-hidden="true" className="compact-picker-card-surface absolute inset-0" />
+              {isPickerMounted && (
+                <div
+                  ref={pickerContentScaleRef}
+                  className="compact-picker-content-scale absolute inset-0 z-10"
+                  style={pickerContentScaleStyle}
+                >
+                  <div
+                    className={`compact-picker-content ${
+                      isNavigatorOpen ? "compact-picker-content-open" : ""
+                    }`}
+                  >
+                    <ScrollFade className="h-full overflow-y-auto px-2 py-3 scrollbar-none">
+                      <SidebarNavigator
+                        openFile={handleOpenFile}
+                        enableContextMenus={false}
+                        onOpenFileComplete={closeNavigator}
+                        className="flex flex-col gap-4"
+                      />
+                    </ScrollFade>
+                  </div>
+                </div>
+              )}
+              <div
+                ref={pickerBorderRef}
+                aria-hidden="true"
+                className="compact-picker-card-border absolute inset-0 z-20"
                 style={pickerBorderStyle}
               />
-            </svg>
+            </div>
           </div>
 
           <button
@@ -296,5 +376,72 @@ export function CompactFileLayout() {
         <EditorArea />
       </div>
     </div>
+  );
+}
+
+function applyPickerFrameGeometry(
+  frame: HTMLDivElement,
+  contentScale: HTMLDivElement,
+  border: HTMLDivElement,
+  geometry: PickerFrameGeometry,
+) {
+  frame.style.transform = `translate3d(${geometry.left}px, ${geometry.top}px, 0) scale(${geometry.scaleX}, ${geometry.scaleY})`;
+  frame.style.borderRadius = `${geometry.radius / geometry.scaleX}px / ${
+    geometry.radius / geometry.scaleY
+  }px`;
+  contentScale.style.transform = `scale(${1 / geometry.scaleX}, ${1 / geometry.scaleY})`;
+  border.style.borderTopWidth = `${1 / geometry.scaleY}px`;
+  border.style.borderRightWidth = `${1 / geometry.scaleX}px`;
+  border.style.borderBottomWidth = `${1 / geometry.scaleY}px`;
+  border.style.borderLeftWidth = `${1 / geometry.scaleX}px`;
+}
+
+function interpolatePickerFrameGeometry(
+  from: PickerFrameGeometry,
+  to: PickerFrameGeometry,
+  progress: number,
+): PickerFrameGeometry {
+  return {
+    left: interpolateNumber(from.left, to.left, progress),
+    top: interpolateNumber(from.top, to.top, progress),
+    scaleX: interpolateNumber(from.scaleX, to.scaleX, progress),
+    scaleY: interpolateNumber(from.scaleY, to.scaleY, progress),
+    radius: interpolateNumber(from.radius, to.radius, progress),
+  };
+}
+
+function interpolateNumber(from: number, to: number, progress: number) {
+  return from + (to - from) * progress;
+}
+
+function compactPickerEase(progress: number) {
+  return cubicBezier(progress, 0.32, 0, 0.2, 1);
+}
+
+function cubicBezier(progress: number, x1: number, y1: number, x2: number, y2: number) {
+  if (progress <= 0 || progress >= 1) return progress;
+
+  let t = progress;
+  for (let i = 0; i < 4; i += 1) {
+    const x = bezierCoordinate(t, x1, x2) - progress;
+    const derivative = bezierDerivative(t, x1, x2);
+    if (Math.abs(x) < 0.001 || derivative === 0) break;
+    t -= x / derivative;
+  }
+
+  return bezierCoordinate(t, y1, y2);
+}
+
+function bezierCoordinate(t: number, point1: number, point2: number) {
+  const inverseT = 1 - t;
+  return 3 * inverseT * inverseT * t * point1 + 3 * inverseT * t * t * point2 + t * t * t;
+}
+
+function bezierDerivative(t: number, point1: number, point2: number) {
+  const inverseT = 1 - t;
+  return (
+    3 * inverseT * inverseT * point1 +
+    6 * inverseT * t * (point2 - point1) +
+    3 * t * t * (1 - point2)
   );
 }
