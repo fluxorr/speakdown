@@ -163,6 +163,7 @@ export function CompactFileLayout() {
     width: `${pickerMetrics.rootWidth}px`,
     height: `${pickerShellHeight}px`,
     "--compact-picker-card-clip-path": pickerMaskClipPath,
+    "--compact-picker-border-color": isNavigatorOpen ? "var(--line-subtler)" : "transparent",
     "--compact-picker-shadow-filter": isNavigatorOpen
       ? "drop-shadow(0 15px 35px rgba(0, 0, 0, 0.15))"
       : "drop-shadow(0 0 0 rgba(0, 0, 0, 0))",
