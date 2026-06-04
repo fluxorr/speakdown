@@ -253,7 +253,14 @@ input {
 }
 
 .compact-picker-card-surface {
+  --compact-picker-trigger-bg-tint: color-mix(
+    in srgb,
+    var(--fg-base) calc(var(--contrast) * 22%),
+    transparent
+  );
+  --compact-picker-trigger-tint: transparent;
   background:
+    linear-gradient(var(--compact-picker-trigger-tint), var(--compact-picker-trigger-tint)),
     linear-gradient(
       color-mix(in srgb, var(--bg-base) 55%, transparent),
       color-mix(in srgb, var(--bg-base) 55%, transparent)
@@ -261,6 +268,18 @@ input {
     var(--surface-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+[data-theme="dark"] .compact-picker-card-surface {
+  --compact-picker-trigger-bg-tint: color-mix(
+    in srgb,
+    var(--fg-base) calc(var(--contrast) * 60%),
+    transparent
+  );
+}
+
+[data-theme="light"] .compact-picker-card-surface {
+  --compact-picker-trigger-bg-tint: color-mix(in srgb, var(--bg-base) 40%, transparent);
 }
 
 .compact-picker-card-mask {

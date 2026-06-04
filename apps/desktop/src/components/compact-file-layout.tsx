@@ -162,6 +162,9 @@ export function CompactFileLayout() {
     height: `${pickerShellHeight}px`,
     "--compact-picker-card-clip-path": pickerMaskClipPath,
     "--compact-picker-border-color": isNavigatorOpen ? "var(--line-subtler)" : "transparent",
+    "--compact-picker-trigger-tint": isNavigatorOpen
+      ? "transparent"
+      : "var(--compact-picker-trigger-bg-tint)",
   } as CSSProperties;
   const pickerNavigatorStyle = {
     position: "absolute",
@@ -264,7 +267,7 @@ export function CompactFileLayout() {
             <span
               aria-hidden="true"
               className={`relative flex h-3 w-3 shrink-0 items-center justify-center text-[var(--text-icon-muted)] transition-transform duration-150 ease-out ${
-                isNavigatorOpen ? "rotate-90" : ""
+                isNavigatorOpen ? "-rotate-90" : "rotate-90"
               }`}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
