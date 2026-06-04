@@ -114,7 +114,7 @@ export function CompactFileLayout() {
       >
         <div
           ref={pickerRootRef}
-          className="pointer-events-auto relative flex w-[min(360px,calc(100vw-40px))] justify-center"
+          className="pointer-events-auto relative isolate flex w-[min(360px,calc(100vw-40px))] justify-center"
         >
           <button
             ref={triggerRef}
@@ -124,7 +124,7 @@ export function CompactFileLayout() {
             aria-controls={isNavigatorOpen ? PICKER_POPUP_ID : undefined}
             aria-expanded={isNavigatorOpen}
             onClick={isNavigatorOpen ? closeNavigator : openNavigator}
-            className="group relative inline-flex h-[var(--chrome-control-height)] max-w-[240px] items-center justify-center gap-1.5 rounded-lg border border-transparent bg-transparent px-3 font-[inherit] text-[13px] text-[var(--fg-base)]"
+            className="group relative z-30 inline-flex h-[var(--chrome-control-height)] max-w-[240px] items-center justify-center gap-1.5 rounded-lg border border-transparent bg-transparent px-3 font-[inherit] text-[13px] text-[var(--fg-base)]"
           >
             {!isPickerMounted && (
               <div className="pointer-events-none absolute inset-0 rounded-lg bg-transparent transition-colors group-hover:bg-[var(--surface-input)]" />
@@ -150,7 +150,7 @@ export function CompactFileLayout() {
           {isPickerMounted && (
             <div
               aria-hidden="true"
-              className="surface-card pointer-events-none absolute left-0 top-0 z-40 w-full overflow-hidden rounded-xl transition-[clip-path] duration-200 ease-out"
+              className="surface-card pointer-events-none absolute left-0 top-0 z-0 w-full overflow-hidden rounded-xl transition-[clip-path] duration-200 ease-out"
               style={{
                 height: PICKER_SHELL_HEIGHT,
                 clipPath: pickerClipPath,
@@ -163,7 +163,7 @@ export function CompactFileLayout() {
           {isPickerMounted && (
             <div
               aria-hidden="true"
-              className={`pointer-events-none absolute left-0 z-[45] w-full rounded-xl border border-[var(--line-subtler)] transition-opacity duration-100 ease-out ${
+              className={`pointer-events-none absolute left-0 z-10 w-full rounded-xl border border-[var(--line-subtler)] transition-opacity duration-100 ease-out ${
                 isNavigatorOpen ? "opacity-100 delay-100" : "opacity-0"
               }`}
               style={{
@@ -179,7 +179,7 @@ export function CompactFileLayout() {
               id={PICKER_POPUP_ID}
               role="dialog"
               aria-label="File navigator"
-              className="absolute left-0 z-50 w-full rounded-xl outline-none"
+              className="absolute left-0 z-20 w-full rounded-xl outline-none"
               style={{
                 top: PICKER_OPEN_TOP,
                 height: PICKER_OPEN_HEIGHT,
