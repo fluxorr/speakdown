@@ -38,9 +38,7 @@ export function CompactRecentsList({
 
   return (
     <div className={className}>
-      <div className={SIDEBAR_SECTION_LABEL_CLASS}>
-        Recents
-      </div>
+      <div className={SIDEBAR_SECTION_LABEL_CLASS}>Recents</div>
 
       {visibleRecentFiles.length > 0 ? (
         <div role="list" aria-label="Recent files" className="flex flex-col gap-px">
