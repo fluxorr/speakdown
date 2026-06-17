@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-16
+
+- Open each new window at a random on-screen position instead of stacking them in the same spot, so it is obvious when more than one window is open. The position is chosen within the active display's work area (the screen minus menu bar/dock) and clamped so the whole window stays visible; it prefers the display under the cursor. This applies to secondary windows — compact single-file windows, new workspace windows, drag-drop opens, and second launches — while the first window keeps its default placement.
+
 ## 2026-06-09
 
 - Make compact mode fully global instead of workspace-scoped. Opening a markdown file directly (CLI, Finder, drag-drop) now opens a standalone compact window with no workspace at all — no file/folder indexing, no recursive watcher, no gitignore loading — so single-file windows open fast. The open file is still watched for external changes via a lightweight non-recursive watch on its parent directory that survives atomic-rename saves.
