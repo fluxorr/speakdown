@@ -204,6 +204,21 @@ input {
   background-clip: padding-box;
 }
 
+/* While dragging a sidebar item, force the grabbing-hand cursor everywhere so
+   element-specific cursors (text, pointer) don't override it. */
+body.tree-dragging,
+body.tree-dragging * {
+  cursor: grabbing !important;
+}
+
+/* Freeze tree-row hover states during a drag. WebKit doesn't reliably clear
+   `:hover` while a pointer button is held, so rows the cursor passes over get
+   stuck showing their hover background/arrow. Making rows non-hit-testable
+   removes `:hover` entirely; drop targeting uses row geometry, not hit-testing. */
+body.tree-dragging [data-tree-path] {
+  pointer-events: none;
+}
+
 /* cmdk command palette */
 [cmdk-overlay] {
   position: fixed;

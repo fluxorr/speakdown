@@ -6,7 +6,6 @@ import {
   usePinnedFiles,
   useRefreshDirectory,
   useRemovePinnedFile,
-  useRewritePinnedPath,
   useTogglePinnedFile,
 } from "@/hooks/use-file-tree";
 import { useOpenFile } from "@/hooks/use-tabs";
@@ -14,7 +13,6 @@ import {
   getOpenFile,
   openFileInNewTab as openFileInNewTabAction,
   removePathReferences,
-  renameOpenFile,
 } from "@/hooks/editor-api";
 import {
   SIDEBAR_SECTION_PAGE_SIZE,
@@ -25,6 +23,7 @@ import {
 import * as tauri from "@/lib/tauri";
 import { getFileStem, getParentDir, getRelativePath } from "@/lib/paths";
 import { duplicateFile } from "./duplicate-file";
+import { useMoveEntry } from "./use-move-entry";
 import { FileTree } from "./file-tree";
 import { FileTreeNode } from "./file-tree-node";
 import { showFileContextMenu } from "./file-context-menu";
@@ -58,7 +57,7 @@ export function SidebarNavigator({
   const pinnedPaths = usePinnedFiles();
   const togglePinnedFile = useTogglePinnedFile();
   const removePinnedFile = useRemovePinnedFile();
-  const rewritePinnedPath = useRewritePinnedPath();
+  const { applyPathChange } = useMoveEntry();
   const [recentVisibleCount, setRecentVisibleCount] = useState(RECENTS_SECTION_PAGE_SIZE);
   const [pinnedVisibleCount, setPinnedVisibleCount] = useState(SIDEBAR_SECTION_PAGE_SIZE);
   const recentFiles = useRecentSidebarFiles(recentVisibleCount);
@@ -93,10 +92,7 @@ export function SidebarNavigator({
             window.alert(`A file named "${trimmed}${ext}" already exists.`);
             return;
           }
-          await tauri.renameEntry(entry.path, newPath);
-          renameOpenFile(entry.path, newPath);
-          rewritePinnedPath(entry.path, newPath);
-          await refreshDirectory(parent);
+          await applyPathChange(entry, newPath);
         } catch (error) {
           window.alert(
             `Failed to rename: ${error instanceof Error ? error.message : String(error)}`,
@@ -104,7 +100,7 @@ export function SidebarNavigator({
         }
       })();
     },
-    [enableContextMenus, refreshDirectory, rewritePinnedPath],
+    [applyPathChange, enableContextMenus],
   );
 
   const handleFileContextMenu = useCallback(
