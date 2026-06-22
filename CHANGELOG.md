@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-22
+
+- Code-health pass across the desktop app and marketing site (now scoring 100/100 on React Doctor). Mostly internal, with a few user-relevant effects: more screen-reader labels on editor and settings controls, semantic landmarks in the editor chrome, a lighter backdrop blur on the anchor-warning banner, and DOMPurify sanitization of rendered Mermaid diagram SVG. Also broke several module import cycles (notably by splitting page-kind views from their behavior so the stores no longer pull in the editor UI), removed unused dependencies (`motion`, `react-resizable-panels`) and dead code, and parallelized a few independent file reads.
+
 ## 2026-06-16
 
 - Drag files and folders in the sidebar's `Everything` tree to move them. Drop onto a folder to move inside it, onto a file to move into that file's folder, or onto empty tree space to move to the workspace root; a multi-selection moves together. Open tabs, pinned files, and expanded folders follow the move, and name collisions are reported instead of overwriting. Dragging uses pointer events so it coexists with the existing Finder-drop-to-open behavior.
