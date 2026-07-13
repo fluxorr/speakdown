@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SettingDef } from "@/lib/settings-schema";
 
 interface SettingControlProps {
@@ -211,6 +211,61 @@ function ListControl({ value, onChange }: { value: string[]; onChange: (v: strin
   );
 }
 
+function ShortcutControl({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [recording, setRecording] = useState(false);
+
+  // While recording, capture the next key combo. Ignore bare modifier taps
+  // (need at least one non-modifier key) and never capture Esc (cancels).
+  useEffect(() => {
+    if (!recording) return;
+    function onKeyDown(e: KeyboardEvent) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") {
+        setRecording(false);
+        return;
+      }
+      const mods: string[] = [];
+      if (e.metaKey || e.ctrlKey) mods.push("Cmd");
+      if (e.altKey) mods.push("Alt");
+      if (e.shiftKey) mods.push("Shift");
+      const isModifier =
+        e.key === "Meta" || e.key === "Control" || e.key === "Alt" || e.key === "Shift";
+      if (isModifier) return;
+      const key = e.key === " " ? "Space" : e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      onChange([...mods, key].join("+"));
+      setRecording(false);
+    }
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [recording, onChange]);
+
+  if (recording) {
+    return (
+      <span className="inline-flex h-9 min-w-[140px] items-center justify-center rounded-lg border border-[var(--focus-border)] bg-[var(--surface-input)] px-3 text-[13px] text-[var(--text-secondary)]">
+        Press keys…
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setRecording(true)}
+      className="inline-flex h-9 min-w-[140px] items-center justify-center gap-1 rounded-lg border border-transparent bg-[var(--surface-input)] px-3 text-[13px] text-[var(--text-secondary)] transition-colors hover:border-[var(--focus-border)]"
+    >
+      {value.split("+").map((part, i) => (
+        <kbd
+          key={i}
+          className="rounded bg-[var(--kbd-bg)] px-1.5 py-0.5 text-[11px] text-[var(--text-secondary)]"
+        >
+          {part}
+        </kbd>
+      ))}
+    </button>
+  );
+}
+
 /** Dispatch a control widget for a SettingDef. The single switch keeps the
  *  schema → control mapping centralized; any view rendering settings should
  *  use this rather than re-implementing the type dispatch. */
@@ -248,6 +303,8 @@ function Control({
           onChange={onChange}
         />
       );
+    case "shortcut":
+      return <ShortcutControl value={(value as string) ?? ""} onChange={onChange} />;
   }
 }
 

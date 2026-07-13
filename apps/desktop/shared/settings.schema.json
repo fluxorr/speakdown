@@ -294,6 +294,87 @@
       "category": "Search",
       "type": "number",
       "default": 50
+    },
+    {
+      "key": "voice.tts.voice",
+      "label": "Read-Aloud Voice",
+      "description": "macOS voice identifier for read-aloud (e.g. \"Samantha\", \"Daniel\"). Blank uses the system default voice.",
+      "category": "Voice",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "voice.tts.rate",
+      "label": "Read-Aloud Rate",
+      "description": "Speech rate multiplier for read-aloud (0.5 = half speed, 2 = double).",
+      "category": "Voice",
+      "type": "range",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "voice.tts.pitch",
+      "label": "Read-Aloud Pitch",
+      "description": "Voice pitch multiplier for read-aloud (1 = default).",
+      "category": "Voice",
+      "type": "range",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "voice.tts.scope",
+      "label": "Read-Aloud Scope",
+      "description": "What read-aloud speaks when triggered.",
+      "category": "Voice",
+      "type": "enum",
+      "options": ["cursor", "selection", "document"],
+      "default": "cursor"
+    },
+    {
+      "key": "voice.stt.language",
+      "label": "Dictation Language",
+      "description": "Fixed language for dictation (Whisper language code).",
+      "category": "Voice",
+      "type": "enum",
+      "options": ["en", "es", "fr", "de", "it", "pt", "nl", "ru", "zh", "ja", "ko", "ar"],
+      "default": "en"
+    },
+    {
+      "key": "voice.stt.model",
+      "label": "Dictation Model",
+      "description": "Whisper model size for dictation. Downloaded on first use and cached.",
+      "category": "Voice",
+      "type": "enum",
+      "options": ["tiny", "base", "small", "medium", "large"],
+      "default": "small"
+    },
+    {
+      "key": "voice.stt.autopunctuate",
+      "label": "Dictation Auto-Punctuate",
+      "description": "Automatically insert punctuation and expand spoken formatting commands.",
+      "category": "Voice",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "voice.shortcut.read",
+      "label": "Read-Aloud Shortcut",
+      "description": "Keyboard shortcut to start/pause read-aloud.",
+      "category": "Voice",
+      "type": "shortcut",
+      "default": "Cmd+Shift+R"
+    },
+    {
+      "key": "voice.shortcut.dictate",
+      "label": "Dictation Shortcut",
+      "description": "Keyboard shortcut to toggle dictation.",
+      "category": "Voice",
+      "type": "shortcut",
+      "default": "Cmd+Shift+D"
     }
   ]
 }
