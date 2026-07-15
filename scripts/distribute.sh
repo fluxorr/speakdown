@@ -69,10 +69,6 @@ fi
 # `tauri build`/`tauri signer` read as a path.
 if [ -f "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
   export TAURI_SIGNING_PRIVATE_KEY_PATH="$TAURI_SIGNING_PRIVATE_KEY"
-elif [ ! -f "$HOME/${TAURI_SIGNING_PRIVATE_KEY#\~/}" ] && [ ! -f "/${TAURI_SIGNING_PRIVATE_KEY#/}" ]; then
-  # Treat the value as the key string itself; leave it in place.
-  :
-fi
 fi
 
 # Apple signing/notarization is OPTIONAL. With all four APPLE_* vars present the
