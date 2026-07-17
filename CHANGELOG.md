@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-17
+
+- Document date display: shows "Updated 2 minutes ago" (and optionally "Created Jul 17") below the frontmatter panel in the editor, sourced from filesystem timestamps or frontmatter `date`/`updated` fields. Relative time is used for recent changes (under 7 days); older timestamps fall back to absolute dates. A small `read_file_metadata` Rust command serves birthtime and mtime over IPC.
+
 ## 2026-07-15
 
 - Dictation engines: choose between local **sherpa-onnx** models and Apple's built-in speech recognition. The sherpa engine now runs two on-device NeMo Transducer models — **Nemotron** streams word-by-word for live, low-latency partial text, while **Parakeet TDT** transcribes each phrase when you pause (higher accuracy, no live preview). A new **Apple** engine uses macOS's on-device `SFSpeechRecognizer` with nothing to download. Switch engine and model on the fly from a small picker on the dictation indicator, or set the defaults under Voice settings. Dictation stays fully offline for all engines; the Apple engine additionally requests speech-recognition permission (`NSSpeechRecognitionUsageDescription`) the first time you use it.

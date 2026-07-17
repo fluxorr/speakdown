@@ -5,6 +5,7 @@ import type {
   ContentMatch,
   DirEntry,
   FileContent,
+  FileMetadata,
   IndexStats,
   SearchResult,
   WriteResult,
@@ -26,6 +27,10 @@ export function readFileEntries(paths: string[]): Promise<DirEntry[]> {
 
 export function readFile(path: string): Promise<FileContent> {
   return invoke("read_file", { path });
+}
+
+export function readFileMetadata(path: string): Promise<FileMetadata> {
+  return invoke("read_file_metadata", { path });
 }
 
 export function writeFile(path: string, content: string): Promise<WriteResult> {

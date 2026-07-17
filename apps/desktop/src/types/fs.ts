@@ -41,6 +41,11 @@ export interface ContentMatch {
   score: number;
 }
 
+export interface FileMetadata {
+  created_at: number;
+  modified_at: number;
+}
+
 export interface IndexStats {
   file_count: number;
   duration_ms: number;

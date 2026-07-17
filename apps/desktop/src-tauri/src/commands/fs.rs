@@ -33,6 +33,12 @@ pub struct WriteResult {
     pub modified_at: u64,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct FileMetadata {
+    pub created_at: u64,
+    pub modified_at: u64,
+}
+
 async fn blocking<T: Send + 'static>(
     f: impl FnOnce() -> Result<T, AppError> + Send + 'static,
 ) -> Result<T, AppError> {
@@ -461,6 +467,29 @@ pub async fn file_exists(path: String) -> bool {
     tauri::async_runtime::spawn_blocking(move || PathBuf::from(&path).exists())
         .await
         .unwrap_or(false)
+}
+
+#[tauri::command]
+pub async fn read_file_metadata(path: String) -> Result<FileMetadata, AppError> {
+    blocking(move || {
+        let file_path = PathBuf::from(&path);
+        let meta = fs::metadata(&file_path)?;
+
+        let created_at = meta
+            .created()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+
+        let modified_at = modified_time(&file_path);
+
+        Ok(FileMetadata {
+            created_at,
+            modified_at,
+        })
+    })
+    .await
 }
 
 pub fn reveal_in_file_manager_impl(path: &str) -> Result<(), AppError> {

@@ -1,6 +1,7 @@
 import type { EditorView } from "@codemirror/view";
 import { ProseMarkEditor } from "./prosemark-editor";
 import { FrontmatterPanel } from "./frontmatter-panel";
+import { DocumentDate } from "./document-date";
 import { EditorScrollContainer } from "./editor-scroll-container";
 import { EditorSearchOverview } from "./editor-search-overview";
 import { SectionRail } from "./section-rail";
@@ -82,6 +83,7 @@ export const EditorPane = memo(function EditorPane({ path, isActive }: EditorPan
           }}
         >
           <FrontmatterPanel filePath={path} />
+          <DocumentDate filePath={path} />
         </div>
         <div ref={editorSettingsRef}>
           <ProseMarkEditor

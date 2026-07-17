@@ -551,6 +551,7 @@ pub fn run() {
             commands::fs::rename_entry,
             commands::fs::delete_entry,
             commands::fs::file_exists,
+            commands::fs::read_file_metadata,
             commands::fs::reveal_in_file_manager,
             commands::workspace::open_workspace,
             commands::workspace::open_workspace_in_new_window,
