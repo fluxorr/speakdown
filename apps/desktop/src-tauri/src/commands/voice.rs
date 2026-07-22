@@ -41,7 +41,7 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, InputCallbackInfo, SampleFormat, StreamConfig};
 use rubato::{FftFixedIn, Resampler};
 use serde_json::json;
-use sherpa_onnx::{OfflineRecognizer, OnlineRecognizer};
+use sherpa_onnx::{OfflineRecognizer, OfflineRecognizerConfig, OnlineRecognizer};
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 
 /// Engine id for Apple's native on-device `SFSpeechRecognizer`. Any other value
@@ -55,22 +55,20 @@ const RESAMPLER_CHUNK: usize = 8_192;
 const WORKER_TICK: Duration = Duration::from_millis(60);
 const PROGRESS_STEP: u64 = 256 * 1024;
 
+#[derive(Clone, Copy, PartialEq)]
+enum ModelKind {
+    Streaming,
+    OfflineTransducer,
+    MoonshineV2,
+    SenseVoice,
+}
+
 /// Model registry: the Settings `voice.stt.model` id maps to a GitHub release
-/// asset (from `k2-fsa/sherpa-onnx` `asr-models`). Both are NeMo Transducers
-/// (encoder/decoder/joiner + tokens), discovered by globbing after extraction.
-///
-/// `streaming` distinguishes how the model is run:
-/// - `true`  → true streaming NeMo Transducer (Nemotron). Driven by the
-///   `OnlineRecognizer`; yields live partial hypotheses every frame.
-/// - `false` → a Token-and-Duration Transducer (Parakeet TDT). These export
-///   *without* the streaming `window_size`/`chunk_shift` metadata the
-///   `OnlineRecognizer` requires, so they run through the `OfflineRecognizer`:
-///   we buffer the utterance and decode it once when speech pauses. No live
-///   partials, but the same per-utterance commit UX.
+/// asset (from `k2-fsa/sherpa-onnx` `asr-models`).
 struct ModelDef {
     archive: &'static str,
     url: &'static str,
-    streaming: bool,
+    kind: ModelKind,
 }
 
 const MODELS: &[(&str, ModelDef)] = &[
@@ -79,7 +77,7 @@ const MODELS: &[(&str, ModelDef)] = &[
         ModelDef {
             archive: "sherpa-onnx-nemotron-speech-streaming-en-0.6b-int8-2026-01-14.tar.bz2",
             url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemotron-speech-streaming-en-0.6b-int8-2026-01-14.tar.bz2",
-            streaming: true,
+            kind: ModelKind::Streaming,
         },
     ),
     (
@@ -87,13 +85,64 @@ const MODELS: &[(&str, ModelDef)] = &[
         ModelDef {
             archive: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2",
             url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2",
-            streaming: false,
+            kind: ModelKind::OfflineTransducer,
+        },
+    ),
+    (
+        "moonshine-tiny",
+        ModelDef {
+            archive: "sherpa-onnx-moonshine-tiny-en-quantized-2026-02-27.tar.bz2",
+            url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-moonshine-tiny-en-quantized-2026-02-27.tar.bz2",
+            kind: ModelKind::MoonshineV2,
+        },
+    ),
+    (
+        "sense-voice",
+        ModelDef {
+            archive: "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2",
+            url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2",
+            kind: ModelKind::SenseVoice,
         },
     ),
 ];
 
 fn model_def(id: &str) -> Option<&'static ModelDef> {
     MODELS.iter().find(|(k, _)| *k == id).map(|(_, d)| d)
+}
+
+fn discover_moonshine_files(dir: &std::path::Path) -> Option<(PathBuf, PathBuf, PathBuf)> {
+    let mut enc = None;
+    let mut dec = None;
+    let mut tok = None;
+    fn walk(d: &std::path::Path, enc: &mut Option<PathBuf>, dec: &mut Option<PathBuf>, tok: &mut Option<PathBuf>) {
+        let Ok(entries) = std::fs::read_dir(d) else { return };
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_dir() { walk(&p, enc, dec, tok); continue; }
+            let Some(name) = p.file_name().and_then(|n| n.to_str()) else { continue };
+            let lower = name.to_ascii_lowercase();
+            if lower == "tokens.txt" { *tok = Some(p.clone()); }
+            else if lower.contains("encoder") && (lower.ends_with(".onnx") || lower.ends_with(".ort")) { *enc = Some(p.clone()); }
+            else if lower.contains("decoder") && lower.contains("merged") && (lower.ends_with(".onnx") || lower.ends_with(".ort")) { *dec = Some(p.clone()); }
+        }
+    }
+    walk(dir, &mut enc, &mut dec, &mut tok);
+    Some((enc?, dec?, tok?))
+}
+
+fn discover_sense_voice_files(dir: &std::path::Path) -> Option<(PathBuf, PathBuf)> {
+    let mut model = None;
+    let mut tok = None;
+    let Ok(entries) = std::fs::read_dir(dir) else { return None };
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if p.is_dir() { continue; }
+        let Some(name) = p.file_name().and_then(|n| n.to_str()) else { continue };
+        let lower = name.to_ascii_lowercase();
+        if lower == "tokens.txt" { tok = Some(p.clone()); }
+        else if lower.contains("model.int8.onnx") || lower == "model.int8.onnx" { model = Some(p.clone()); }
+    }
+    Some((model?, tok?))
 }
 
 /// `cpal::Stream` is `!Send`/`!Sync` on macOS (it wraps a CoreAudio object),
@@ -721,49 +770,18 @@ fn run_streaming_worker(
     }
 }
 
-/// Offline worker body for non-streaming Transducers (e.g. Parakeet TDT). These
-/// models can't be driven by the `OnlineRecognizer`, so we buffer the resampled
-/// audio for the current utterance and run it through the `OfflineRecognizer`
-/// once a trailing-silence pause is detected (or when dictation stops). The
-/// result is emitted as a final transcript; there are no live partials.
-#[allow(clippy::too_many_arguments)]
-fn run_offline_worker(
+/// Shared capture loop for all offline-only models. Buffers resampled audio,
+/// decodes on silence detection, and flushes on stop.
+fn run_offline_capture_loop(
     rt: Arc<Mutex<VoiceRuntime>>,
     window: WebviewWindow,
     raw: Arc<Mutex<Vec<f32>>>,
     cancel: Arc<AtomicBool>,
-    files: (PathBuf, PathBuf, PathBuf, PathBuf),
+    recognizer: OfflineRecognizer,
     mut resampler: FftFixedIn<f32>,
     my_epoch: u64,
 ) {
     let debug = std::env::var("VOICE_STT_DEBUG").is_ok();
-
-    let mut config = sherpa_onnx::OfflineRecognizerConfig::default();
-    config.model_config.transducer.encoder = Some(files.0.to_string_lossy().into_owned());
-    config.model_config.transducer.decoder = Some(files.1.to_string_lossy().into_owned());
-    config.model_config.transducer.joiner = Some(files.2.to_string_lossy().into_owned());
-    config.model_config.tokens = Some(files.3.to_string_lossy().into_owned());
-    // NeMo Transducer family (RNN-T / TDT), offline path.
-    config.model_config.model_type = Some("nemo_transducer".into());
-    config.model_config.provider = Some("cpu".into());
-    let threads = std::thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(4)
-        .clamp(1, 8);
-    config.model_config.num_threads = threads as i32;
-    config.decoding_method = Some("greedy_search".into());
-    config.feat_config.sample_rate = 16_000;
-
-    let recognizer = match OfflineRecognizer::create(&config) {
-        Some(r) => r,
-        None => {
-            let _ = window.emit(
-                "voice-stt-status",
-                json!({ "status": "error", "message": "failed to load speech model" }),
-            );
-            return;
-        }
-    };
 
     let still_mine = |rt: &Arc<Mutex<VoiceRuntime>>| -> bool {
         let g = rt.lock().unwrap();
@@ -771,11 +789,9 @@ fn run_offline_worker(
     };
 
     let mut leftover: Vec<f32> = Vec::new();
-    // Resampled audio accumulated for the current utterance.
     let mut buffer: Vec<f32> = Vec::new();
-    // Consecutive silent samples seen in the current utterance.
     let mut silence: usize = 0;
-    const SILENCE_LIMIT: usize = (TARGET_SAMPLE_RATE as f32 * 0.7) as usize; // ~0.7 s
+    const SILENCE_LIMIT: usize = (TARGET_SAMPLE_RATE as f32 * 0.7) as usize;
 
     loop {
         thread::sleep(WORKER_TICK);
@@ -793,7 +809,6 @@ fn run_offline_worker(
             }
         }
 
-        // End of utterance: enough trailing silence and we have audio to decode.
         if !buffer.is_empty() && silence >= SILENCE_LIMIT {
             run_offline_decode(&recognizer, &window, &buffer, debug);
             buffer.clear();
@@ -803,11 +818,105 @@ fn run_offline_worker(
         let _ = window.emit("voice-stt-level", json!({ "level": level }));
     }
 
-    // Final flush: a trailing utterance with no silence tail yet still decodes.
     if still_mine(&rt) && !buffer.is_empty() {
         run_offline_decode(&recognizer, &window, &buffer, debug);
     }
     let _ = window.emit("voice-stt-status", json!({ "status": "idle" }));
+}
+
+/// Offline worker for NeMo Transducer models (e.g. Parakeet TDT).
+fn run_offline_worker(
+    rt: Arc<Mutex<VoiceRuntime>>,
+    window: WebviewWindow,
+    raw: Arc<Mutex<Vec<f32>>>,
+    cancel: Arc<AtomicBool>,
+    files: (PathBuf, PathBuf, PathBuf, PathBuf),
+    resampler: FftFixedIn<f32>,
+    my_epoch: u64,
+) {
+    let mut config = OfflineRecognizerConfig::default();
+    config.model_config.transducer.encoder = Some(files.0.to_string_lossy().into_owned());
+    config.model_config.transducer.decoder = Some(files.1.to_string_lossy().into_owned());
+    config.model_config.transducer.joiner = Some(files.2.to_string_lossy().into_owned());
+    config.model_config.tokens = Some(files.3.to_string_lossy().into_owned());
+    config.model_config.model_type = Some("nemo_transducer".into());
+    config.model_config.provider = Some("cpu".into());
+    let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).clamp(1, 8);
+    config.model_config.num_threads = threads as i32;
+    config.decoding_method = Some("greedy_search".into());
+    config.feat_config.sample_rate = 16_000;
+
+    let recognizer = match OfflineRecognizer::create(&config) {
+        Some(r) => r,
+        None => {
+            let _ = window.emit("voice-stt-status", json!({ "status": "error", "message": "failed to load speech model" }));
+            return;
+        }
+    };
+    run_offline_capture_loop(rt, window, raw, cancel, recognizer, resampler, my_epoch);
+}
+
+/// Offline worker for Moonshine v2 models (encoder + merged_decoder).
+fn run_moonshine_worker(
+    rt: Arc<Mutex<VoiceRuntime>>,
+    window: WebviewWindow,
+    raw: Arc<Mutex<Vec<f32>>>,
+    cancel: Arc<AtomicBool>,
+    files: (PathBuf, PathBuf, PathBuf),
+    resampler: FftFixedIn<f32>,
+    my_epoch: u64,
+) {
+    let mut config = OfflineRecognizerConfig::default();
+    config.model_config.moonshine.encoder = Some(files.0.to_string_lossy().into_owned());
+    config.model_config.moonshine.merged_decoder = Some(files.1.to_string_lossy().into_owned());
+    config.model_config.tokens = Some(files.2.to_string_lossy().into_owned());
+    config.model_config.model_type = Some("moonshine".into());
+    config.model_config.provider = Some("cpu".into());
+    let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).clamp(1, 8);
+    config.model_config.num_threads = threads as i32;
+    config.decoding_method = Some("greedy_search".into());
+    config.feat_config.sample_rate = 16_000;
+
+    let recognizer = match OfflineRecognizer::create(&config) {
+        Some(r) => r,
+        None => {
+            let _ = window.emit("voice-stt-status", json!({ "status": "error", "message": "failed to load speech model" }));
+            return;
+        }
+    };
+    run_offline_capture_loop(rt, window, raw, cancel, recognizer, resampler, my_epoch);
+}
+
+/// Offline worker for SenseVoice models (single model.onnx + tokens).
+fn run_sense_voice_worker(
+    rt: Arc<Mutex<VoiceRuntime>>,
+    window: WebviewWindow,
+    raw: Arc<Mutex<Vec<f32>>>,
+    cancel: Arc<AtomicBool>,
+    files: (PathBuf, PathBuf),
+    resampler: FftFixedIn<f32>,
+    my_epoch: u64,
+) {
+    let mut config = OfflineRecognizerConfig::default();
+    config.model_config.sense_voice.model = Some(files.0.to_string_lossy().into_owned());
+    config.model_config.sense_voice.language = Some("auto".into());
+    config.model_config.sense_voice.use_itn = true;
+    config.model_config.tokens = Some(files.1.to_string_lossy().into_owned());
+    config.model_config.model_type = Some("sense_voice".into());
+    config.model_config.provider = Some("cpu".into());
+    let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).clamp(1, 8);
+    config.model_config.num_threads = threads as i32;
+    config.decoding_method = Some("greedy_search".into());
+    config.feat_config.sample_rate = 16_000;
+
+    let recognizer = match OfflineRecognizer::create(&config) {
+        Some(r) => r,
+        None => {
+            let _ = window.emit("voice-stt-status", json!({ "status": "error", "message": "failed to load speech model" }));
+            return;
+        }
+    };
+    run_offline_capture_loop(rt, window, raw, cancel, recognizer, resampler, my_epoch);
 }
 
 /// Run one offline decode over a full utterance and emit the transcript.
@@ -848,7 +957,21 @@ pub fn voice_stt_start(
     let def = model_def(&model).ok_or_else(|| format!("unknown dictation model: {model}"))?;
     let app = window.app_handle();
     let dir = model_dir(app, &model)?;
-    let files = discover_model_files(&dir).ok_or("model-not-ready".to_string())?;
+    // Validate model files exist (per-kind tuple type doesn't mix, so check
+    // early but only capture the nemo tuple for streaming/offline workers).
+    match def.kind {
+        ModelKind::Streaming | ModelKind::OfflineTransducer =>
+            { discover_model_files(&dir).ok_or("model-not-ready".to_string())?; }
+        ModelKind::MoonshineV2 =>
+            { discover_moonshine_files(&dir).ok_or("model-not-ready".to_string())?; }
+        ModelKind::SenseVoice =>
+            { discover_sense_voice_files(&dir).ok_or("model-not-ready".to_string())?; }
+    }
+    let nemo_files = match def.kind {
+        ModelKind::Streaming | ModelKind::OfflineTransducer =>
+            discover_model_files(&dir),
+        _ => None,
+    };
 
     let rt = runtime();
     let mut guard = rt.lock().unwrap();
@@ -914,28 +1037,22 @@ pub fn voice_stt_start(
 
     let rt_for_worker = Arc::clone(&rt);
     let worker_window = window.clone();
-    let streaming = def.streaming;
+    let kind = def.kind;
+    // Pre-compute per-kind file tuples before the move closure.
+    let moonshine_files = if kind == ModelKind::MoonshineV2 { discover_moonshine_files(&dir) } else { None };
+    let sense_voice_files = if kind == ModelKind::SenseVoice { discover_sense_voice_files(&dir) } else { None };
     guard.worker = Some(thread::spawn(move || {
-        if streaming {
-            run_streaming_worker(
-                rt_for_worker,
-                worker_window,
-                raw,
-                cancel,
-                files,
-                resampler,
-                my_epoch,
-            );
-        } else {
-            run_offline_worker(
-                rt_for_worker,
-                worker_window,
-                raw,
-                cancel,
-                files,
-                resampler,
-                my_epoch,
-            );
+        match kind {
+            ModelKind::Streaming => run_streaming_worker(rt_for_worker, worker_window, raw, cancel, nemo_files.expect("files verified"), resampler, my_epoch),
+            ModelKind::OfflineTransducer => run_offline_worker(rt_for_worker, worker_window, raw, cancel, nemo_files.expect("files verified"), resampler, my_epoch),
+            ModelKind::MoonshineV2 => {
+                let mf = moonshine_files.expect("moonshine files verified at start");
+                run_moonshine_worker(rt_for_worker, worker_window, raw, cancel, mf, resampler, my_epoch);
+            }
+            ModelKind::SenseVoice => {
+                let svf = sense_voice_files.expect("sense-voice files verified at start");
+                run_sense_voice_worker(rt_for_worker, worker_window, raw, cancel, svf, resampler, my_epoch);
+            }
         }
     }));
 
