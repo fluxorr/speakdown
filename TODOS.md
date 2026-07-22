@@ -82,6 +82,9 @@ Previously-triaged work organized by phase. Pull into `Up Next` as capacity open
 
 ## Done
 
+- Moonshine Tiny and SenseVoice dictation models + dictation keyboard shortcuts (Escape→stop, Enter→commit+stop)
+- Fuzzy content search and grep: [`SPECs/fuzzy-search-grep-spec.md`](SPECs/fuzzy-search-grep-spec.md) — add full-content fuzzy search + grep across the workspace (`Cmd+Shift+F`), reusing the gitignore-filtered `file_index` for a live scan. Worksheet: [`SPECs/Agent/worksheet-fuzzy-search-grep.md`](SPECs/Agent/worksheet-fuzzy-search-grep.md).
+
 See `CHANGELOG.md` and `git log` for shipped work. Notable items:
 
 - [x] External file watcher: external file changes (Finder, git, vim, scripts) reach the sidebar and reload-from-disk reliably; dotdir workspace roots, `/var` aliases, and self-write echoes all fixed ([`SPECs/external-file-watcher-spec.md`](SPECs/external-file-watcher-spec.md))
