@@ -9,7 +9,7 @@ import {
   closeBrackets,
   closeBracketsKeymap,
 } from "@codemirror/autocomplete";
-import { lintKeymap } from "@codemirror/lint";
+import { lintKeymap, lintGutter } from "@codemirror/lint";
 import { defaultHideExtensions } from "./hide";
 import { defaultFoldableSyntaxExtensions } from "./fold";
 import { clickLinkExtension, defaultClickLinkHandler } from "./clickLink";
@@ -27,6 +27,8 @@ import { prosemarkMarkdownFormattingKeymap } from "./markdownFormattingKeymap";
 export { prosemarkMarkdownSyntaxExtensions } from "./markdown";
 
 export const prosemarkBasicSetup = (): Extension => [
+  EditorView.contentAttributes.of({ spellcheck: "true" }),
+
   // ProseMark Setup
   defaultHideExtensions,
   defaultFoldableSyntaxExtensions,
@@ -56,6 +58,7 @@ export const prosemarkBasicSetup = (): Extension => [
     indentWithTab,
   ]),
   foldGutter(),
+  lintGutter(),
   EditorView.lineWrapping,
 ];
 
