@@ -237,8 +237,8 @@ pub fn read_directory_impl(
     }
 
     // Sort dirs-first, then alphabetical within each group
-    dirs.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-    files.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    dirs.sort_by_key(|a| a.name.to_lowercase());
+    files.sort_by_key(|a| a.name.to_lowercase());
     dirs.extend(files);
     Ok(dirs)
 }
