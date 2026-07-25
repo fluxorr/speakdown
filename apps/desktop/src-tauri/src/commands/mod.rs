@@ -9,3 +9,4 @@ pub mod startup;
 #[cfg(target_os = "macos")]
 pub mod voice;
 pub mod workspace;
+pub mod tags;
