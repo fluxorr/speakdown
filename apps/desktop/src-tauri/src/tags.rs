@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TagInfo {
@@ -37,7 +37,7 @@ impl TagIndex {
             let tag = tag.to_lowercase();
             let file = TaggedFile {
                 path: path.clone(),
-                title,
+                title: title.clone(),
                 modified_at,
                 tags: tags.clone(),
             };

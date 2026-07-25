@@ -1,5 +1,6 @@
-// Command to extract tags from a markdown file content
-async fn extract_tags_from_content(content: &str, path: &str) -> Result<Vec<String>, AppError> {
+use crate::AppError;
+
+async fn extract_tags_from_content(content: &str) -> Result<Vec<String>, AppError> {
     let mut tags = Vec::new();
     let mut in_fenced_code = false;
     let mut in_frontmatter = false;
@@ -56,7 +57,7 @@ async fn extract_tags_from_content(content: &str, path: &str) -> Result<Vec<Stri
 }
 
 #[tauri::command]
-pub async fn get_tags_from_content(path: String, content: String) -> Result<Vec<String>, AppError> {
-    let tags = extract_tags_from_content(&content, &path).await?;
+pub async fn get_tags_from_content(_path: String, content: String) -> Result<Vec<String>, AppError> {
+    let tags = extract_tags_from_content(&content).await?;
     Ok(tags)
 }
