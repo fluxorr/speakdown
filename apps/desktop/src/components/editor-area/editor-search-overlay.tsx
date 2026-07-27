@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
@@ -44,9 +45,7 @@ function computeMatchInfo(view: EditorView, query: string): MatchInfo | null {
 }
 
 export function EditorSearchOverlay() {
-  const isOpen = useEditorSearchStore((s) => s.isOpen);
   const view = useEditorSearchStore((s) => s.view);
-  const openVersion = useEditorSearchStore((s) => s.openVersion);
   const docVersion = useEditorSearchStore((s) => s.docVersion);
 
   const [query, setQuery] = useState("");
@@ -54,9 +53,9 @@ export function EditorSearchOverlay() {
   const [showReplace, setShowReplace] = useState(false);
   const findInputRef = useRef<HTMLInputElement>(null);
 
-  // On open: pre-fill from selection (single-line only) and focus the find input.
+  // On mount: pre-fill from selection (single-line only) and focus the find input.
   useEffect(() => {
-    if (!isOpen || !view) return;
+    if (!view) return;
     const sel = view.state.selection.main;
     let nextQuery = query;
     if (sel.from !== sel.to) {
@@ -72,16 +71,14 @@ export function EditorSearchOverlay() {
       findInputRef.current?.select();
     });
     return () => cancelAnimationFrame(focusFrame);
-    // Only runs when the overlay is explicitly opened.
-    // eslint-disable-next-line react-doctor/exhaustive-deps
-  }, [isOpen, view, openVersion]);
+  }, [view]); // eslint-disable-line react-doctor/exhaustive-deps
 
   const matchInfo = useMemo(() => {
-    if (!isOpen || !view) return null;
+    if (!view) return null;
     return computeMatchInfo(view, query);
     // docVersion bumps on every doc/selection change so the count recomputes.
     // eslint-disable-next-line react-doctor/exhaustive-deps
-  }, [isOpen, view, query, docVersion]);
+  }, [view, query, docVersion]);
 
   const actions = useMemo(() => {
     function next() {
@@ -102,7 +99,7 @@ export function EditorSearchOverlay() {
     return { next, prev, doReplace, doReplaceAll, doClose };
   }, [view, query]);
 
-  if (!isOpen || !view) return null;
+  if (!view) return null;
 
   function onFindKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
@@ -203,33 +200,43 @@ export function EditorSearchOverlay() {
         </IconButton>
       </div>
 
-      {showReplace && (
-        <div className="mt-1.5 flex items-center gap-1.5 pl-7">
-          <input
-            type="text"
-            value={replaceText}
-            onChange={(e) => onReplaceTextChange(e.target.value)}
-            onKeyDown={onReplaceKeyDown}
-            placeholder="Replace"
-            aria-label="Replace"
-            className="min-w-0 flex-1 rounded-lg bg-[var(--surface-input)] px-2 text-[13px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus-visible:outline-none h-[var(--chrome-control-height)]"
-          />
-          <button
-            type="button"
-            onClick={actions.doReplace}
-            className="shrink-0 rounded-md px-2.5 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] h-[var(--chrome-control-height)]"
+      <AnimatePresence>
+        {showReplace && (
+          <motion.div
+            key="replace-row"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.14, ease: "easeOut" }}
           >
-            Replace
-          </button>
-          <button
-            type="button"
-            onClick={actions.doReplaceAll}
-            className="shrink-0 rounded-md bg-[var(--accent)] px-2.5 text-[12px] font-medium text-white hover:opacity-90 h-[var(--chrome-control-height)]"
-          >
-            All
-          </button>
-        </div>
-      )}
+            <div className="mt-1.5 flex items-center gap-1.5 pl-7">
+              <input
+                type="text"
+                value={replaceText}
+                onChange={(e) => onReplaceTextChange(e.target.value)}
+                onKeyDown={onReplaceKeyDown}
+                placeholder="Replace"
+                aria-label="Replace"
+                className="min-w-0 flex-1 rounded-lg bg-[var(--surface-input)] px-2 text-[13px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus-visible:outline-none h-[var(--chrome-control-height)]"
+              />
+              <button
+                type="button"
+                onClick={actions.doReplace}
+                className="shrink-0 rounded-md px-2.5 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] h-[var(--chrome-control-height)]"
+              >
+                Replace
+              </button>
+              <button
+                type="button"
+                onClick={actions.doReplaceAll}
+                className="shrink-0 rounded-md bg-[var(--accent)] px-2.5 text-[12px] font-medium text-white hover:opacity-90 h-[var(--chrome-control-height)]"
+              >
+                All
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </SurfaceCard>
   );
 }
