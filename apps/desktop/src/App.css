@@ -114,6 +114,13 @@
   line-height: 1.5;
   color: var(--text-secondary);
   background-color: var(--bg);
+
+  /* Motion tokens */
+  --motion-duration-micro: 120ms;
+  --motion-duration-layout: 140ms;
+  --motion-duration-surface: 180ms;
+  --motion-duration-morph: 260ms;
+  --motion-ease-standard: ease-out;
 }
 
 /* Light mode: settings/theme cards rely on their border alone — a tinted fill
@@ -488,6 +495,13 @@ body.tree-dragging [data-tree-path] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-micro: 1ms;
+    --motion-duration-layout: 1ms;
+    --motion-duration-surface: 1ms;
+    --motion-duration-morph: 1ms;
+  }
+
   .cm-dictation-overlay {
     animation: none;
   }
