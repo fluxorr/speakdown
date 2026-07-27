@@ -50,3 +50,16 @@ export interface IndexStats {
   file_count: number;
   duration_ms: number;
 }
+
+export interface TagInfo {
+  tag: string;
+  file_paths: string[];
+}
+
+export interface TaggedFile {
+  path: string;
+  name: string;
+  title: string | null;
+  modified_at: number;
+  tags: string[];
+}

@@ -10,6 +10,7 @@ pub struct TagInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaggedFile {
     pub path: String,
+    pub name: String,
     pub title: Option<String>,
     pub modified_at: u64,
     pub tags: Vec<String>,
@@ -32,11 +33,12 @@ impl TagIndex {
         }
     }
 
-    pub fn add_document(&mut self, path: String, title: Option<String>, modified_at: u64, tags: Vec<String>) {
+    pub fn add_document(&mut self, path: String, name: String, title: Option<String>, modified_at: u64, tags: Vec<String>) {
         for tag in &tags {
             let tag = tag.to_lowercase();
             let file = TaggedFile {
                 path: path.clone(),
+                name: name.clone(),
                 title: title.clone(),
                 modified_at,
                 tags: tags.clone(),

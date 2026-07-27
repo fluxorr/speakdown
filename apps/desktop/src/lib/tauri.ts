@@ -8,6 +8,8 @@ import type {
   FileMetadata,
   IndexStats,
   SearchResult,
+  TagInfo,
+  TaggedFile,
   WriteResult,
   WorkspaceInfo,
 } from "@/types/fs";
@@ -319,4 +321,21 @@ export function voiceSttStart(
 /** Stop capture and emit the final transcript. */
 export function voiceSttStop(): Promise<void> {
   return invoke("voice_stt_stop");
+}
+
+// Tags commands
+
+/** Rebuild the tag index by scanning all markdown files in the workspace. */
+export function reindexTags(): Promise<void> {
+  return invoke("reindex_tags");
+}
+
+/** Return every tag in the workspace with the files that contain it. */
+export function listTags(): Promise<TagInfo[]> {
+  return invoke("list_tags");
+}
+
+/** Return the files tagged with the given name (case-insensitive). */
+export function getTaggedFiles(tag: string): Promise<TaggedFile[]> {
+  return invoke("get_tagged_files", { tag });
 }

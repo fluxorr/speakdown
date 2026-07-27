@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-28
+
+- Tags: write `#tag` in your documents and Writer indexes them. A new **Tags** section in the sidebar lists every tag with a file count — click a tag to see which files contain it, click a file to open it. Tags render as clickable accent-colored chips in the editor; clicking a chip filters the sidebar to show files with that tag. Tags inside code blocks, frontmatter, and inline code are correctly ignored.
+
 ## 2026-07-22
 
 - Dictation models: two new offline speech-to-text models — **Moonshine Tiny** (fast quantized encoder+merged-decoder, competitive with Whisper tiny) and **SenseVoice** (multilingual, auto-detect, unified model file). Switchable from the model picker on the dictation indicator alongside the existing Nemotron/Parakeet/Apple engines.
