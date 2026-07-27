@@ -51,7 +51,8 @@ function buildTagDecorations(view: EditorView): DecorationSet {
   let match: RegExpExecArray | null;
 
   while ((match = TAG_RE.exec(doc)) !== null) {
-    const tagStart = match.index + (match[0].startsWith(" ") ? 1 : 0);
+    const hashPos = match[0].indexOf("#");
+    const tagStart = match.index + hashPos;
     const tagEnd = tagStart + match[1].length;
 
     // Check if the tag overlaps a no-go zone.
