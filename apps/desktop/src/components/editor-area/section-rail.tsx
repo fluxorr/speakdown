@@ -138,7 +138,7 @@ export function SectionRail({ filePath, view, scrollContainerRef }: SectionRailP
                 background: "currentColor",
                 opacity: isActive ? 1 : 0.35,
                 transform: isActive ? "scaleX(1)" : `scaleX(${INACTIVE_TICK_SCALE})`,
-                transition: "transform 300ms ease-in, opacity 300ms ease-in",
+                transition: "transform 180ms ease-out, opacity 180ms ease-out",
                 pointerEvents: "auto",
               };
               return (

@@ -11,7 +11,7 @@ export function SidebarToggleButton() {
       onClick={toggleSidebar}
       aria-label={isSidebarVisible ? "Hide sidebar" : "Show sidebar"}
       title={isSidebarVisible ? "Hide sidebar" : "Show sidebar"}
-      className="group flex h-7 w-7 items-center justify-center rounded-md text-[var(--fg-base)] transition-colors hover:bg-[var(--surface-subtle)] hover:transition-none"
+      className="group flex h-7 w-7 items-center justify-center rounded-md text-[var(--fg-base)] transition-[color,background-color,transform] duration-75 active:scale-[0.97] hover:bg-[var(--surface-subtle)] hover:transition-none"
     >
       <span className="opacity-60 transition-opacity group-hover:opacity-100 group-hover:transition-none">
         <HugeiconsIcon icon={SidebarLeftIcon} size={18} color="currentColor" strokeWidth={2} />
