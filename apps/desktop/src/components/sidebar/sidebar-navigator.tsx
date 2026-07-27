@@ -27,6 +27,7 @@ import { useMoveEntry } from "./use-move-entry";
 import { FileTree } from "./file-tree";
 import { FileTreeNode } from "./file-tree-node";
 import { showFileContextMenu } from "./file-context-menu";
+import { TagSection } from "./tag-section";
 import { ShowMoreButton, SidebarSection } from "./sidebar-section";
 import type { DirEntry } from "@/types/fs";
 
@@ -245,6 +246,8 @@ export function SidebarNavigator({
           </div>
         </SidebarSection>
       )}
+
+      <TagSection openFile={openFileAndComplete} />
 
       <SidebarSection title="Everything">
         <FileTree

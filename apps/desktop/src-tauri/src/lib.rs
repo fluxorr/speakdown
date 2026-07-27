@@ -584,6 +584,9 @@ pub fn run() {
             commands::shell_install::uninstall_cli,
             #[cfg(target_os = "macos")]
             commands::voice::voice_stt_ensure_model,
+            commands::tags::reindex_tags,
+            commands::tags::list_tags,
+            commands::tags::get_tagged_files,
             #[cfg(target_os = "macos")]
             commands::voice::voice_stt_start,
             #[cfg(target_os = "macos")]

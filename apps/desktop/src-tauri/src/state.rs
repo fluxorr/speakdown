@@ -1,6 +1,7 @@
 use crate::config::Settings;
 use crate::ignore::WorkspaceIgnore;
 use crate::open_target::PendingOpenPayload;
+use crate::tags::TagIndex;
 use notify::RecommendedWatcher;
 use parking_lot::{Mutex, RwLock};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -64,6 +65,10 @@ pub struct WorkspaceState {
     /// same file onto the existing window and as the target of the
     /// single-file watcher.
     pub standalone_file: RwLock<Option<PathBuf>>,
+    /// Tag index for the current workspace. Maps tag names to the files
+    /// that contain them. Rebuilt by `reindex_tags` on workspace open and
+    /// on file save.
+    pub tag_index: RwLock<TagIndex>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -92,6 +97,7 @@ impl Default for WorkspaceState {
             startup_open_taken: AtomicBool::new(false),
             pending_open: Mutex::new(VecDeque::new()),
             standalone_file: RwLock::new(None),
+            tag_index: RwLock::new(TagIndex::new()),
         }
     }
 }

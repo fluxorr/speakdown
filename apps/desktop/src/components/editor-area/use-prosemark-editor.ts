@@ -46,6 +46,7 @@ import { htmlBlockDecorations, htmlBlockParserExtension } from "./html-block-dec
 import { mermaidDecorations } from "./mermaid-decorations";
 import { dragFreezeExtensions } from "./drag-selection-gate";
 import { clampSelectionToHeadings, headingDecorations } from "./heading-decorations";
+import { tagDecorations } from "./tag-decorations";
 import { imageSrcResolver } from "./image-src-resolver";
 import { wikiLinkExtension } from "./wiki-link-extension";
 import {
@@ -609,6 +610,7 @@ function createEditorExtensions(
     htmlBlockDecorations(),
     mermaidDecorations(),
     headingDecorations,
+    tagDecorations,
     lineJumpExtension,
     voiceHighlightExtension,
     dictationOverlayExtension,

@@ -252,3 +252,19 @@
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li {
   font-family: var(--ui-font);
 }
+
+/* Tag chip decorations in the editor */
+.cm-editor .cm-tag {
+  display: inline;
+  border-radius: 3px;
+  padding: 0 4px;
+  margin: 0 1px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.cm-editor .cm-tag:hover {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
