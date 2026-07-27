@@ -51,7 +51,10 @@
 
 ## Up Next
 
--
+- [ ] Word count + reading time in status bar: show live word count, character count, and estimated reading time in the document footer, with a setting toggle.
+- [ ] Auto-close brackets and quotes in the editor: CodeMirror's `closeBrackets` extension for `()`, `[]`, `{}`, `""`, `''`, and backticks.
+- [ ] Obsidian-style image embeds (`![[image.png]]`): [`SPECs/obsidian-image-embed-spec.md`](SPECs/obsidian-image-embed-spec.md) — render inline images in the editor.
+- [ ] Typewriter / focus mode: keep the current line vertically centered in the editor; toggle from the command palette.
 
 ## Backlog
 
@@ -59,7 +62,7 @@ Previously-triaged work organized by phase. Pull into `Up Next` as capacity open
 
 #### Content features
 
-- [ ] Tags: [`SPECs/tags-spec.md`](SPECs/tags-spec.md)
+- [x] Tags: [`SPECs/tags-spec.md`](SPECs/tags-spec.md)
 - [x] New tab recent files: [`SPECs/new-tab-recent-files-spec.md`](SPECs/new-tab-recent-files-spec.md)
 - [x] Document date display: [`SPECs/document-date-display-spec.md`](SPECs/document-date-display-spec.md)
 
