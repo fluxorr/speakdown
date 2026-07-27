@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
+import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { useIsActive } from "@/hooks/use-tabs";
@@ -86,7 +87,10 @@ export const FileTreeNode = memo(function FileTreeNode({
     // Directories show the full name; files show only the stem (extension is appended on submit).
     const initialValue = entry.is_dir ? entry.name : getFileStem(entry.name);
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
         className={`flex h-[32px] w-full items-center gap-1.5 overflow-hidden rounded-lg pr-2 text-[13px] leading-[1.15] ${
           isActive ? "bg-[var(--surface-subtle)]" : ""
         }`}
@@ -115,7 +119,7 @@ export const FileTreeNode = memo(function FileTreeNode({
           }}
           onBlur={(event) => onRenameSubmit?.(entry, event.currentTarget.value)}
         />
-      </div>
+      </motion.div>
     );
   }
 

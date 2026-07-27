@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 interface SidebarSectionProps {
   title: string;
@@ -37,7 +38,21 @@ export function SidebarSection({ title, children }: SidebarSectionProps) {
           </svg>
         </span>
       </button>
-      {!isCollapsed && children}
+      <motion.div layout style={{ overflow: "hidden" }}>
+        <AnimatePresence initial={false}>
+          {!isCollapsed && (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+            >
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </section>
   );
 }

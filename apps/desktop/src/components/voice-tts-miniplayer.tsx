@@ -36,15 +36,39 @@ export function VoiceTtsMiniplayer() {
             title={isPaused ? "Resume" : "Pause"}
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-background hover:opacity-90"
           >
-            {isPaused ? (
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <path d="M4 2.5v11l9-5.5z" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <path d="M3 3h3v10H3zM10 3h3v10h-3z" />
-              </svg>
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              {isPaused ? (
+                <motion.svg
+                  key="play"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  aria-hidden
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.1, ease: "easeOut" }}
+                >
+                  <path d="M4 2.5v11l9-5.5z" />
+                </motion.svg>
+              ) : (
+                <motion.svg
+                  key="pause"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  aria-hidden
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.1, ease: "easeOut" }}
+                >
+                  <path d="M3 3h3v10H3zM10 3h3v10h-3z" />
+                </motion.svg>
+              )}
+            </AnimatePresence>
           </button>
 
           <button

@@ -1,4 +1,5 @@
 import { useCallback, useRef, type FocusEvent, type KeyboardEvent } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useFrontmatterEntries } from "./use-frontmatter-entries";
 import type { YamlEntry } from "@/lib/yaml-entries";
 
@@ -123,36 +124,52 @@ export function FrontmatterPanel({ filePath }: FrontmatterPanelProps) {
     [entries, addEntry, removeEntry],
   );
 
-  if (!hasFrontmatter) return null;
-
   return (
-    <div ref={containerRef} data-frontmatter className="space-y-2 pb-6">
-      <div className="flex flex-col gap-1.5">
-        {entries.map((entry, index) => (
-          <FrontmatterRow
-            key={entry.id}
-            entry={entry}
-            index={index}
-            onUpdate={updateEntry}
-            onRemove={removeEntry}
-            onBlur={blurEntry}
-            onKeyDown={handleKeyDown}
-          />
-        ))}
-      </div>
-
-      <div className="flex items-center gap-4 pt-1">
-        <button
-          type="button"
-          onClick={addEntry}
-          className="flex items-center gap-1 text-[13px] leading-[1.15] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+    <AnimatePresence>
+      {hasFrontmatter && (
+        <motion.div
+          key="frontmatter"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.14, ease: "easeOut" }}
+          style={{ overflow: "hidden" }}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Add property
-        </button>
-      </div>
-    </div>
+          <div ref={containerRef} data-frontmatter className="space-y-2 pb-6">
+            <div className="flex flex-col gap-1.5">
+              {entries.map((entry, index) => (
+                <FrontmatterRow
+                  key={entry.id}
+                  entry={entry}
+                  index={index}
+                  onUpdate={updateEntry}
+                  onRemove={removeEntry}
+                  onBlur={blurEntry}
+                  onKeyDown={handleKeyDown}
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center gap-4 pt-1">
+              <button
+                type="button"
+                onClick={addEntry}
+                className="flex items-center gap-1 text-[13px] leading-[1.15] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M6 2v8M2 6h8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Add property
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
