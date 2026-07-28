@@ -1,0 +1,6 @@
+{
+  "rootDirectory": "apps/website",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "framework": "vite"
+}
