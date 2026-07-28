@@ -1,8 +1,8 @@
 # Speakdown
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot.png">
-  <img alt="Speakdown editor with sidebar, tag browser, and dictation indicator" src="assets/screenshot.png" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot.png?v=2">
+  <img alt="Speakdown editor with sidebar, tag browser, and dictation indicator" src="assets/screenshot.png?v=2" width="720">
   
 </picture>
 
