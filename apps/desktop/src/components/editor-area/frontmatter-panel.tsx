@@ -125,13 +125,13 @@ export function FrontmatterPanel({ filePath }: FrontmatterPanelProps) {
   );
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {hasFrontmatter && (
         <motion.div
           key="frontmatter"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
+          initial={{ height: 0 }}
+          animate={{ height: "auto" }}
+          exit={{ height: 0 }}
           transition={{ duration: 0.14, ease: "easeOut" }}
           style={{ overflow: "hidden" }}
         >
