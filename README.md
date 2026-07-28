@@ -3,6 +3,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot.png">
   <img alt="Speakdown editor with sidebar, tag browser, and dictation indicator" src="assets/screenshot.png" width="720">
+  
 </picture>
 
 Fast, lightweight, local-first markdown editor with offline voice dictation and read-aloud.
@@ -80,3 +81,4 @@ As required by the GPL:
 - This program is distributed in the hope that it will be useful, but **without any warranty**; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for more details.
 - The complete corresponding source code is publicly available at the repository above.
 - Modified versions are marked as changed, and problems should not be attributed to the authors of previous versions.
+-
