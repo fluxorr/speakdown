@@ -2,6 +2,9 @@
 
 ## 2026-07-28
 
+- **Animations**: subtle micro-interactions across the sidebar and editor chrome — hover states on file rows, smooth enter/exit animations on floating surfaces (command palette, search overlay, voice mini-player), and layout transitions for panels, all driven by spring physics (Motion library). CSS motion tokens (`--motion-duration-*`, `--motion-ease-*`) with full `prefers-reduced-motion` support.
+- **Dictation stability**: fixed a crash when starting dictation (`Cmd+Shift+D`) in production builds, where a Rust panic in the worker thread killed the whole process (`panic = "abort"`). Worker threads now handle missing model files gracefully instead of panicking, mutex poisoning recovers cleanly, and a filesystem race between validating and reading model files is eliminated.
+
 - Tags: write `#tag` in your documents and Writer indexes them. A new **Tags** section in the sidebar lists every tag with a file count — click a tag to see which files contain it, click a file to open it. Tags render as clickable accent-colored chips in the editor; clicking a chip filters the sidebar to show files with that tag. Tags inside code blocks, frontmatter, and inline code are correctly ignored.
 
 ## 2026-07-22

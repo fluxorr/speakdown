@@ -65,7 +65,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVERjcxNzg5QjQzODNDQzYKUldUR1BEaTBpUmYzN1hwaUlqYm5ORVU5eXhYeEpOY3hUNEpQdEtIVzU5KzB0V2JpeDNoT0w5SnAK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERGQ0RCMzFFMjM3NENENDkKUldSSnpYUWpIclBOM3dTK3FkRzhjenB2NXFaYlhBWWZGVlZQeVo1bmh1Y1ZZYllaRmlEQ2tyZCsK",
       "endpoints": ["https://github.com/fluxorr/speakdown/releases/latest/download/latest.json"]
     }
   }

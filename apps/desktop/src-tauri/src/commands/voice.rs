@@ -375,7 +375,7 @@ fn apple_ensure(window: WebviewWindow) {
 fn start_apple(window: WebviewWindow, model: String) -> Result<(), String> {
     let rt = runtime();
     let epoch = {
-        let mut g = rt.lock().unwrap();
+        let mut g = rt.lock().unwrap_or_else(|e| e.into_inner());
         if g.running {
             return Ok(());
         }
@@ -413,7 +413,7 @@ fn start_apple(window: WebviewWindow, model: String) -> Result<(), String> {
     }
 
     {
-        let mut g = rt.lock().unwrap();
+        let mut g = rt.lock().unwrap_or_else(|e| e.into_inner());
         g.apple = Some(AppleSession { handle, ctx });
     }
     let _ = window.emit("voice-stt-status", json!({ "status": "listening" }));
@@ -428,7 +428,7 @@ fn start_apple(window: WebviewWindow, model: String) -> Result<(), String> {
 fn stop_apple(window: &WebviewWindow) {
     let rt = runtime();
     let session = {
-        let mut g = rt.lock().unwrap();
+        let mut g = rt.lock().unwrap_or_else(|e| e.into_inner());
         if !g.running {
             return;
         }
@@ -623,7 +623,7 @@ fn drain_resample(
     leftover: &mut Vec<f32>,
 ) -> (Vec<f32>, f32) {
     let captured = {
-        let mut r = raw.lock().unwrap();
+        let mut r = raw.lock().unwrap_or_else(|e| e.into_inner());
         std::mem::take(&mut *r)
     };
     if captured.is_empty() {
@@ -726,7 +726,7 @@ fn run_streaming_worker(
     let stream = recognizer.create_stream();
 
     let still_mine = |rt: &Arc<Mutex<VoiceRuntime>>| -> bool {
-        let g = rt.lock().unwrap();
+        let Ok(g) = rt.lock() else { return false };
         g.epoch == my_epoch
     };
 
@@ -814,7 +814,7 @@ fn run_offline_capture_loop(
     let debug = std::env::var("VOICE_STT_DEBUG").is_ok();
 
     let still_mine = |rt: &Arc<Mutex<VoiceRuntime>>| -> bool {
-        let g = rt.lock().unwrap();
+        let Ok(g) = rt.lock() else { return false };
         g.epoch == my_epoch
     };
 
@@ -1005,26 +1005,24 @@ pub fn voice_stt_start(
     let def = model_def(&model).ok_or_else(|| format!("unknown dictation model: {model}"))?;
     let app = window.app_handle();
     let dir = model_dir(app, &model)?;
-    // Validate model files exist (per-kind tuple type doesn't mix, so check
-    // early but only capture the nemo tuple for streaming/offline workers).
-    match def.kind {
+    // Validate model files exist and cache per-kind tuples. Single scan per kind
+    // so a filesystem change between validation and capture can't race.
+    let nemo_files = match def.kind {
         ModelKind::Streaming | ModelKind::OfflineTransducer => {
-            discover_model_files(&dir).ok_or("model-not-ready".to_string())?;
+            Some(discover_model_files(&dir).ok_or("model-not-ready".to_string())?)
         }
         ModelKind::MoonshineV2 => {
             discover_moonshine_files(&dir).ok_or("model-not-ready".to_string())?;
+            None
         }
         ModelKind::SenseVoice => {
             discover_sense_voice_files(&dir).ok_or("model-not-ready".to_string())?;
+            None
         }
-    }
-    let nemo_files = match def.kind {
-        ModelKind::Streaming | ModelKind::OfflineTransducer => discover_model_files(&dir),
-        _ => None,
     };
 
     let rt = runtime();
-    let mut guard = rt.lock().unwrap();
+    let mut guard = rt.lock().unwrap_or_else(|e| e.into_inner());
     if guard.running {
         return Ok(());
     }
@@ -1100,38 +1098,52 @@ pub fn voice_stt_start(
         None
     };
     guard.worker = Some(thread::spawn(move || match kind {
-        ModelKind::Streaming => run_streaming_worker(
-            rt_for_worker,
-            worker_window,
-            raw,
-            cancel,
-            nemo_files.expect("files verified"),
-            resampler,
-            my_epoch,
-        ),
-        ModelKind::OfflineTransducer => run_offline_worker(
-            rt_for_worker,
-            worker_window,
-            raw,
-            cancel,
-            nemo_files.expect("files verified"),
-            resampler,
-            my_epoch,
-        ),
+        ModelKind::Streaming => {
+            let Some(files) = nemo_files else {
+                return;
+            };
+            run_streaming_worker(
+                rt_for_worker,
+                worker_window,
+                raw,
+                cancel,
+                files,
+                resampler,
+                my_epoch,
+            );
+        }
+        ModelKind::OfflineTransducer => {
+            let Some(files) = nemo_files else {
+                return;
+            };
+            run_offline_worker(
+                rt_for_worker,
+                worker_window,
+                raw,
+                cancel,
+                files,
+                resampler,
+                my_epoch,
+            );
+        }
         ModelKind::MoonshineV2 => {
-            let mf = moonshine_files.expect("moonshine files verified at start");
+            let Some(files) = moonshine_files else {
+                return;
+            };
             run_moonshine_worker(
                 rt_for_worker,
                 worker_window,
                 raw,
                 cancel,
-                mf,
+                files,
                 resampler,
                 my_epoch,
             );
         }
         ModelKind::SenseVoice => {
-            let svf = sense_voice_files.expect("sense-voice files verified at start");
+            let Some(svf) = sense_voice_files else {
+                return;
+            };
             run_sense_voice_worker(
                 rt_for_worker,
                 worker_window,
@@ -1165,12 +1177,12 @@ pub fn voice_stt_start(
 pub fn voice_stt_stop(window: WebviewWindow) -> Result<(), String> {
     let rt = runtime();
     // Apple native engine has no cpal stream / worker; tear it down separately.
-    if rt.lock().unwrap().apple.is_some() {
+    if rt.lock().unwrap_or_else(|e| e.into_inner()).apple.is_some() {
         stop_apple(&window);
         return Ok(());
     }
     {
-        let mut g = rt.lock().unwrap();
+        let mut g = rt.lock().unwrap_or_else(|e| e.into_inner());
         if !g.running {
             return Ok(());
         }

@@ -51,13 +51,14 @@ pub fn extract_tags_from_content(content: &str) -> Vec<String> {
                     continue;
                 }
                 // Skip hex colors (e.g. #ff0000).
-                if body.len() == 6
-                    && body.chars().all(|c| c.is_ascii_hexdigit())
-                    && word.len() == 7
+                if body.len() == 6 && body.chars().all(|c| c.is_ascii_hexdigit()) && word.len() == 7
                 {
                     continue;
                 }
-                if body.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+                if body
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+                {
                     let lower = body.to_lowercase();
                     if !tags.contains(&lower) {
                         tags.push(lower);
@@ -74,10 +75,7 @@ pub fn extract_tags_from_content(content: &str) -> Vec<String> {
 /// rebuild the tag index. Runs on a blocking thread so large workspaces
 /// don't stall the async runtime.
 #[tauri::command]
-pub async fn reindex_tags(
-    webview: tauri::Webview,
-    app: tauri::AppHandle,
-) -> Result<(), AppError> {
+pub async fn reindex_tags(webview: tauri::Webview, app: tauri::AppHandle) -> Result<(), AppError> {
     let state = app.state::<AppState>().get_or_create(webview.label());
     let files: Vec<(String, String, u64)> = {
         let index = state.file_index.read();
@@ -92,7 +90,9 @@ pub async fn reindex_tags(
             .collect()
     };
 
-    let epoch = state.workspace_epoch.load(std::sync::atomic::Ordering::SeqCst);
+    let epoch = state
+        .workspace_epoch
+        .load(std::sync::atomic::Ordering::SeqCst);
 
     let results = tauri::async_runtime::spawn_blocking(move || {
         let mut new_index = crate::tags::TagIndex::new();
@@ -104,7 +104,10 @@ pub async fn reindex_tags(
                 Ok(content) => {
                     let tags = extract_tags_from_content(&content);
                     if !tags.is_empty() {
-                        let title = name.strip_suffix(".md").or_else(|| name.strip_suffix(".markdown")).map(|s| s.to_string());
+                        let title = name
+                            .strip_suffix(".md")
+                            .or_else(|| name.strip_suffix(".markdown"))
+                            .map(|s| s.to_string());
                         new_index.add_document(
                             path_str.clone(),
                             name.clone(),
@@ -125,7 +128,11 @@ pub async fn reindex_tags(
     .map_err(|e| AppError::Io(e.to_string()))?;
 
     // Check epoch: discard if workspace changed while we were indexing.
-    if state.workspace_epoch.load(std::sync::atomic::Ordering::SeqCst) != epoch {
+    if state
+        .workspace_epoch
+        .load(std::sync::atomic::Ordering::SeqCst)
+        != epoch
+    {
         return Ok(());
     }
 
@@ -136,10 +143,7 @@ pub async fn reindex_tags(
 /// Return every tag in the workspace with the list of files that contain it.
 /// Tags are sorted alphabetically.
 #[tauri::command]
-pub fn list_tags(
-    webview: tauri::Webview,
-    app: tauri::AppHandle,
-) -> Result<Vec<TagInfo>, AppError> {
+pub fn list_tags(webview: tauri::Webview, app: tauri::AppHandle) -> Result<Vec<TagInfo>, AppError> {
     let state = app.state::<AppState>().get_or_create(webview.label());
     let index = state.tag_index.read();
     Ok(index.get_tag_info())

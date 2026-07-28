@@ -33,7 +33,14 @@ impl TagIndex {
         }
     }
 
-    pub fn add_document(&mut self, path: String, name: String, title: Option<String>, modified_at: u64, tags: Vec<String>) {
+    pub fn add_document(
+        &mut self,
+        path: String,
+        name: String,
+        title: Option<String>,
+        modified_at: u64,
+        tags: Vec<String>,
+    ) {
         for tag in &tags {
             let tag = tag.to_lowercase();
             let file = TaggedFile {
@@ -55,7 +62,9 @@ impl TagIndex {
     }
 
     pub fn get_tag_info(&self) -> Vec<TagInfo> {
-        let mut result: Vec<TagInfo> = self.tags.iter()
+        let mut result: Vec<TagInfo> = self
+            .tags
+            .iter()
             .map(|(tag, files)| TagInfo {
                 tag: tag.clone(),
                 file_paths: files.iter().map(|f| f.path.clone()).collect(),
@@ -67,8 +76,6 @@ impl TagIndex {
 
     pub fn get_documents_by_tag(&self, tag: &str) -> Vec<TaggedFile> {
         let tag = tag.to_lowercase();
-        self.tags.get(&tag)
-            .cloned()
-            .unwrap_or_default()
+        self.tags.get(&tag).cloned().unwrap_or_default()
     }
 }
