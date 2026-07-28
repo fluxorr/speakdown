@@ -1,8 +1,0 @@
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "writer-website",
-  "compatibility_date": "2026-04-30",
-  "assets": {
-    "directory": "apps/website/dist/client",
-  },
-}
