@@ -114,6 +114,13 @@
   line-height: 1.5;
   color: var(--text-secondary);
   background-color: var(--bg);
+
+  /* Motion tokens */
+  --motion-duration-micro: 120ms;
+  --motion-duration-layout: 140ms;
+  --motion-duration-surface: 180ms;
+  --motion-duration-morph: 260ms;
+  --motion-ease-standard: ease-out;
 }
 
 /* Light mode: settings/theme cards rely on their border alone — a tinted fill
@@ -397,6 +404,59 @@ body.tree-dragging [data-tree-path] {
   overflow: hidden;
 }
 
+/* cmdk enter/exit — Radix Presence keeps DOM alive for exit anim duration */
+[cmdk-overlay][data-state="open"] {
+  animation: cmdk-overlay-in var(--motion-duration-surface) ease-out;
+}
+[cmdk-overlay][data-state="closed"] {
+  animation: cmdk-overlay-out calc(var(--motion-duration-surface) * 0.83) ease-in;
+}
+
+[cmdk-dialog][data-state="open"] {
+  animation: cmdk-dialog-in var(--motion-duration-surface) ease-out;
+}
+[cmdk-dialog][data-state="closed"] {
+  animation: cmdk-dialog-out calc(var(--motion-duration-surface) * 0.83) ease-in;
+}
+
+@keyframes cmdk-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cmdk-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cmdk-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+@keyframes cmdk-dialog-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+}
+
 [cmdk-input] {
   width: 100%;
   padding: 14px 16px;
@@ -488,6 +548,13 @@ body.tree-dragging [data-tree-path] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-micro: 1ms;
+    --motion-duration-layout: 1ms;
+    --motion-duration-surface: 1ms;
+    --motion-duration-morph: 1ms;
+  }
+
   .cm-dictation-overlay {
     animation: none;
   }

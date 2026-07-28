@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 interface SidebarSectionProps {
   title: string;
@@ -17,7 +18,7 @@ export function SidebarSection({ title, children }: SidebarSectionProps) {
         type="button"
         aria-expanded={!isCollapsed}
         onClick={() => setIsCollapsed((collapsed) => !collapsed)}
-        className={`${SIDEBAR_SECTION_LABEL_CLASS} hover:opacity-100`}
+        className={`${SIDEBAR_SECTION_LABEL_CLASS} transition-opacity duration-120 ease-out hover:transition-none hover:opacity-100`}
       >
         <span>{title}</span>
         <span
@@ -37,7 +38,21 @@ export function SidebarSection({ title, children }: SidebarSectionProps) {
           </svg>
         </span>
       </button>
-      {!isCollapsed && children}
+      <motion.div layout style={{ overflow: "hidden" }}>
+        <AnimatePresence initial={false}>
+          {!isCollapsed && (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+            >
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </section>
   );
 }
@@ -51,7 +66,7 @@ export function ShowMoreButton({ onClick }: ShowMoreButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-[32px] w-full items-center gap-1.5 rounded-lg pr-2 pl-[10px] text-left text-[13px] leading-[1.15] text-[var(--fg-base)] hover:bg-[var(--surface-subtle)]"
+      className="group flex h-[32px] w-full items-center gap-1.5 rounded-lg pr-2 pl-[10px] text-left text-[13px] leading-[1.15] text-[var(--fg-base)] transition-colors duration-120 ease-out hover:transition-none hover:bg-[var(--surface-subtle)]"
     >
       <span className="flex w-5 shrink-0 items-center justify-center opacity-60 group-hover:opacity-100">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">

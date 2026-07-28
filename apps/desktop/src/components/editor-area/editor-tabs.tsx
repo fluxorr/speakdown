@@ -82,7 +82,7 @@ function EditorTabButton({
         {title}
       </span>
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 flex translate-x-full items-center justify-end pr-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 right-0 flex translate-x-full items-center justify-end pr-1 opacity-0 transition-[opacity,transform] duration-100 ease-out group-hover:translate-x-0 group-hover:opacity-100"
         style={{ width: 40 }}
       >
         <button
@@ -166,7 +166,7 @@ export function EditorTabs() {
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => void navigateBack()}
           disabled={!canNavigateBack}
-          className="flex h-[var(--chrome-control-height)] w-7 items-center justify-center rounded-lg text-base text-[var(--text-icon-muted)] transition-colors enabled:hover:bg-[var(--surface-subtle)] enabled:hover:text-[var(--text-secondary)] disabled:opacity-30"
+          className="flex h-[var(--chrome-control-height)] w-7 items-center justify-center rounded-lg text-base text-[var(--text-icon-muted)] transition-[color,background-color,transform] duration-75 active:scale-[0.97] enabled:hover:bg-[var(--surface-subtle)] enabled:hover:text-[var(--text-secondary)] disabled:opacity-30"
           title="Back"
           aria-label="Back"
         >
@@ -177,7 +177,7 @@ export function EditorTabs() {
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => void navigateForward()}
           disabled={!canNavigateForward}
-          className="flex h-[var(--chrome-control-height)] w-7 items-center justify-center rounded-lg text-base text-[var(--text-icon-muted)] transition-colors enabled:hover:bg-[var(--surface-subtle)] enabled:hover:text-[var(--text-secondary)] disabled:opacity-30"
+          className="flex h-[var(--chrome-control-height)] w-7 items-center justify-center rounded-lg text-base text-[var(--text-icon-muted)] transition-[color,background-color,transform] duration-75 active:scale-[0.97] enabled:hover:bg-[var(--surface-subtle)] enabled:hover:text-[var(--text-secondary)] disabled:opacity-30"
           title="Forward"
           aria-label="Forward"
         >
@@ -213,7 +213,7 @@ export function EditorTabs() {
         <button
           type="button"
           onClick={openNewTab}
-          className="ml-1 flex h-[var(--chrome-control-height)] w-9 shrink-0 items-center justify-center rounded-lg text-base text-[var(--text-icon-muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
+          className="ml-1 flex h-[var(--chrome-control-height)] w-9 shrink-0 items-center justify-center rounded-lg text-base text-[var(--text-icon-muted)] transition-[color,background-color,transform] duration-75 active:scale-[0.97] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
           title="New tab"
           aria-label="New tab"
         >

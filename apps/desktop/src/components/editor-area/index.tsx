@@ -1,8 +1,10 @@
+import { AnimatePresence, motion } from "motion/react";
 import { useActiveTab, useActiveTabId, useOpenTabs } from "@/hooks/use-tabs";
 import { pageKind } from "./page-kinds";
 import { pageKindView } from "./page-kinds/views";
 import { EditorSearchOverlay } from "./editor-search-overlay";
 import { AnchorWarningBanner } from "./anchor-warning-banner";
+import { useEditorSearchStore } from "./editor-search-store";
 
 interface EditorAreaProps {
   showFooter?: boolean;
@@ -12,6 +14,7 @@ function EditorArea({ showFooter = true }: EditorAreaProps) {
   const activeTab = useActiveTab();
   const activeTabId = useActiveTabId();
   const tabs = useOpenTabs();
+  const isSearchOpen = useEditorSearchStore((s) => s.isOpen);
 
   return (
     <div className="relative h-full overflow-hidden">
@@ -30,7 +33,19 @@ function EditorArea({ showFooter = true }: EditorAreaProps) {
       {showFooter && activeTab
         ? pageKindView(activeTab.location).renderFooter?.(activeTab.location)
         : null}
-      <EditorSearchOverlay />
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            key="editor-search"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+          >
+            <EditorSearchOverlay />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnchorWarningBanner />
     </div>
   );

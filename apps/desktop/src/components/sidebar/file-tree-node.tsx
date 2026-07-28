@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, type MouseEvent, type PointerEvent } from "react";
+import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { useIsActive } from "@/hooks/use-tabs";
@@ -86,7 +87,10 @@ export const FileTreeNode = memo(function FileTreeNode({
     // Directories show the full name; files show only the stem (extension is appended on submit).
     const initialValue = entry.is_dir ? entry.name : getFileStem(entry.name);
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
         className={`flex h-[32px] w-full items-center gap-1.5 overflow-hidden rounded-lg pr-2 text-[13px] leading-[1.15] ${
           isActive ? "bg-[var(--surface-subtle)]" : ""
         }`}
@@ -115,7 +119,7 @@ export const FileTreeNode = memo(function FileTreeNode({
           }}
           onBlur={(event) => onRenameSubmit?.(entry, event.currentTarget.value)}
         />
-      </div>
+      </motion.div>
     );
   }
 
@@ -137,7 +141,7 @@ export const FileTreeNode = memo(function FileTreeNode({
       onPointerDown={onPointerDown ? (event) => onPointerDown(event, entry) : undefined}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`group ${entry.is_dir ? "group/folder " : ""}flex h-[32px] w-full items-center gap-1.5 overflow-hidden rounded-lg pr-2 text-left text-[13px] leading-[1.15] text-[var(--fg-base)] ${isDragging ? "opacity-40" : ""} ${bgClassName}`}
+      className={`group ${entry.is_dir ? "group/folder " : ""}flex h-[32px] w-full items-center gap-1.5 overflow-hidden rounded-lg pr-2 text-left text-[13px] leading-[1.15] text-[var(--fg-base)] transition-colors duration-120 ease-out hover:transition-none ${isDragging ? "opacity-40" : ""} ${bgClassName}`}
       style={{ paddingLeft: depth === 0 ? 10 : depth * 12 + 6 }}
     >
       <span className="relative flex w-5 shrink-0 items-center justify-center">
@@ -152,7 +156,7 @@ export const FileTreeNode = memo(function FileTreeNode({
                 size={16}
                 color="currentColor"
                 strokeWidth={2}
-                className={`transition-transform duration-200 ease-out ${isExpanded ? "rotate-90" : ""}`}
+                className={`transition-transform duration-150 ease-out ${isExpanded ? "rotate-90" : ""}`}
               />
             </span>
           </>
@@ -163,7 +167,7 @@ export const FileTreeNode = memo(function FileTreeNode({
         )}
       </span>
       <span
-        className={`min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${isHighlighted ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}
+        className={`min-w-0 overflow-hidden text-ellipsis whitespace-nowrap transition-opacity duration-120 ease-out group-hover:transition-none ${isHighlighted ? "opacity-100" : "opacity-60 group-hover:opacity-100"}`}
       >
         {displayName}
       </span>
