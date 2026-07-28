@@ -1,14 +1,20 @@
 # Speakdown
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshot.png">
+  <img alt="Speakdown editor with sidebar, tag browser, and dictation indicator" src="assets/screenshot.png" width="720">
+</picture>
+
 Fast, lightweight, local-first markdown editor with offline voice dictation and read-aloud.
 
-Built with **Tauri v2**, **React**, **Zustand**, **CodeMirror**, and **Rust**. Documents stay on disk — no database, no cloud. Workspace respects `.gitignore` rules. Supports multiple windows, tables, Mermaid diagrams, full-content search, and fully offline speech-to-text plus text-to-speech.
+Built with **Tauri v2**, **React**, **Zustand**, **CodeMirror**, and **Rust**. Documents stay on disk — no database, no cloud. Workspace respects `.gitignore` rules. Supports multiple windows, tables, Mermaid diagrams, full-content search, tag indexing, and fully offline speech-to-text plus text-to-speech.
 
 ## Features
 
 - **Offline voice dictation** — two local engines: sherpa-onnx (NeMo Transducer models for low-latency streaming) and Apple's on-device `SFSpeechRecognizer`. No cloud dependency.
 - **Read-aloud (TTS)** — karaoke-style word highlighting, mini-player with play/pause/speed, macOS system voices.
-- **Markdown editor** — CodeMirror 6 with extended syntax (tables, Mermaid, YAML frontmatter).
+- **Tag indexing** — write `#tag` in documents; the sidebar lists every tag with a file count. Tags render as clickable chips in the editor.
+- **Markdown editor** — CodeMirror 6 with extended syntax (tables, Mermaid, YAML frontmatter, tag decorations).
 - **Workspace management** — multi-root workspace with `.gitignore`-aware file tree, pinned tabs, drag-to-move files.
 - **Full-content search** — fuzzy and literal grep across all markdown files (`Cmd+Shift+F`).
 - **Local-first** — all data is plain markdown files on your filesystem.
